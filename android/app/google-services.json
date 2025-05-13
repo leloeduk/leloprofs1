@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "237586812207",
+    "project_id": "lelo-profs",
+    "storage_bucket": "lelo-profs.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237586812207:android:cdbe6aa3509d69949f65da",
+        "android_client_info": {
+          "package_name": "com.leloprof.app001.leloprof"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFe2n_i7ll5nFJF7Vm0_jp5lFQ80-E2J0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
