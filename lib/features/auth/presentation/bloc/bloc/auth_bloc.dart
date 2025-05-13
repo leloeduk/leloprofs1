@@ -8,7 +8,7 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepo;
 
-  AuthBloc(this._authRepo) : super(AuthInitial()) {
+  AuthBloc(this._authRepo, sl) : super(AuthInitial()) {
     on<GoogleSignInRequested>(_onGoogleSignIn);
     on<SignOutRequested>(_onSignOut);
     on<CheckAuthFromCache>(_onCheckAuthFromCache);
