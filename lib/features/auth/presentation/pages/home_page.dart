@@ -3,24 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 
+import '../bloc/bloc/auth_event.dart';
+import '../bloc/bloc/auth_state.dart';
+
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
+    final user = (context.read<AuthBloc>().state as Authenticated).user;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Accueil'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed:
-                () => context.read<AuthBloc>().add(AuthSignOutRequested()),
+            onPressed: () => context.read<AuthBloc>().add(SignOutRequested()),
           ),
         ],
       ),
-      body: Center(child: Text('Bienvenue, ${user.name ?? 'Utilisateur'}')),
+      body: Center(
+        child: Text('Bienvenue, ${user.displayName ?? 'Utilisateur'}'),
+      ),
     );
   }
 }

@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/bloc/auth_bloc.dart';
+import '../bloc/bloc/auth_event.dart';
 import '../bloc/bloc/auth_state.dart';
+import 'singup_page.dart';
 
 class AuthPage extends StatelessWidget {
-  const AuthPage({Key? key}) : super(key: key);
+  const AuthPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +34,8 @@ class AuthPage extends StatelessWidget {
                   icon: const Icon(Icons.login),
                   label: const Text("Se connecter avec Google"),
                   onPressed:
-                      () => context.read<AuthBloc>().add(
-                        AuthGoogleSignInRequested(),
-                      ),
+                      () =>
+                          context.read<AuthBloc>().add(GoogleSignInRequested()),
                 ),
                 TextButton(
                   onPressed:

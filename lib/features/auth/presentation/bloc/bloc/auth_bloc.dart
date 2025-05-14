@@ -1,14 +1,12 @@
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
-
 import '../../../data/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthRepository _authRepo;
+  final AuthRepository authRepository;
 
-  AuthBloc(this._authRepo, sl) : super(AuthInitial()) {
+  AuthBloc(this.authRepository) : super(AuthInitial()) {
     on<GoogleSignInRequested>(_onGoogleSignIn);
     on<SignOutRequested>(_onSignOut);
     on<CheckAuthFromCache>(_onCheckAuthFromCache);
@@ -20,20 +18,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final user = await _authRepo.signInWithGoogle();
+      final user = await authRepository.signInWithGoogle();
       emit(user != null ? Authenticated(user) : Unauthenticated());
     } catch (e) {
       emit(AuthError(e.toString()));
+      await Future.delayed(const Duration(seconds: 2));
       emit(Unauthenticated());
     }
-  }
-
-  Future<void> _onSignOut(
-    SignOutRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    await _authRepo.signOut();
-    emit(Unauthenticated());
   }
 
   Future<void> _onCheckAuthFromCache(
@@ -41,12 +32,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    final hasCache = await _authRepo.hasCachedUser();
-    if (hasCache) {
-      final user = _authRepo.getCurrentUser();
-      emit(user != null ? Authenticated(user) : Unauthenticated());
-    } else {
-      emit(Unauthenticated());
-    }
+    final user = authRepository.getCurrentUser();
+    emit(user != null ? Authenticated(user) : Unauthenticated());
+  }
+
+  Future<void> _onSignOut(
+    SignOutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    await authRepository.signOut();
+    emit(Unauthenticated());
   }
 }
