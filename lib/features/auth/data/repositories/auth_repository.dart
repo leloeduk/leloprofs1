@@ -5,4 +5,7 @@ abstract class AuthRepository {
   Future<void> signOut();
   User? getCurrentUser();
   Future<bool> hasCachedUser(); // Vérifie si l'utilisateur est en cache
+
+  Future<void> updateAccountType(String uid, String accountType); // Ajouté
+  Future<User?> getUserById(String uid);
 }

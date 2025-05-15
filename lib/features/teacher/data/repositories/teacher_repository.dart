@@ -1,0 +1,12 @@
+import '../models/teacher_model.dart';
+
+abstract class TeacherRepository {
+  Future<List<TeacherModel>> fetchAllTeachers();
+  Future<void> createTeacher(TeacherModel teacher);
+  Future<void> updateTeacher(TeacherModel teacher);
+  Future<void> deleteTeacher(String id);
+  Future<TeacherModel?> getTeacherById(String id);
+
+  // Nouvelle méthode pour mettre à jour uniquement le plan d'un enseignant
+  Future<void> updateTeacherPlan(String teacherId, String newPlan);
+}
