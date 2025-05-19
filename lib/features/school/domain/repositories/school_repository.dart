@@ -5,5 +5,5 @@ abstract class SchoolRepository {
   Future<void> createSchool(SchoolModel school);
   Future<void> updateSchool(SchoolModel school);
   Future<void> deleteSchool(String id);
-  Future<void> updateSchoolPlan(String schoolId, String newPlan);
+  Future<SchoolModel> getSchoolById(String id);
 }

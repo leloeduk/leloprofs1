@@ -46,7 +46,7 @@ class SchoolsPage extends StatelessWidget {
                   trailing: IconButton(
                     icon: const Icon(Icons.delete),
                     onPressed: () {
-                      context.read<SchoolBloc>().add(DeleteSchool(school.id));
+                      context.read<SchoolBloc>().add(DeleteSchool(school.uid));
                     },
                   ),
                   onTap: () {

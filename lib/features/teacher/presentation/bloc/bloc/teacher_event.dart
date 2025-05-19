@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../data/models/teacher_model.dart';
+import '../../../domain/models/teacher_model.dart';
 
 abstract class TeacherEvent extends Equatable {
   @override

@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'teacher_event.dart';
 import 'teacher_state.dart';
-import '../../../data/repositories/teacher_repository.dart';
+import '../../../domain/repositories/teacher_repository.dart';
 
 class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
   final TeacherRepository teacherRepository;
@@ -11,7 +11,7 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     on<CreateTeacher>(_onCreateTeacher);
     on<UpdateTeacher>(_onUpdateTeacher);
     on<DeleteTeacher>(_onDeleteTeacher);
-    on<UpdateTeacherPlan>(_onUpdateTeacherPlan);
+    // on<UpdateTeacherPlan>(_onUpdateTeacherPlan);
   }
 
   Future<void> _onLoadTeachers(
@@ -85,19 +85,19 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     }
   }
 
-  Future<void> _onUpdateTeacherPlan(
-    UpdateTeacherPlan event,
-    Emitter<TeacherState> emit,
-  ) async {
-    emit(TeacherLoading());
-    try {
-      await teacherRepository.updateTeacherPlan(event.teacherId, event.newPlan);
-      final teachers = await teacherRepository.fetchAllTeachers();
-      emit(TeacherLoaded(teachers));
-    } catch (e) {
-      emit(
-        TeacherError('Erreur lors de la mise à jour du plan: ${e.toString()}'),
-      );
-    }
-  }
+  // Future<void> _onUpdateTeacherPlan(
+  //   UpdateTeacherPlan event,
+  //   Emitter<TeacherState> emit,
+  // ) async {
+  //   emit(TeacherLoading());
+  //   try {
+  //     await teacherRepository.updateTeacherPlan(event.teacherId, event.newPlan);
+  //     final teachers = await teacherRepository.fetchAllTeachers();
+  //     emit(TeacherLoaded(teachers));
+  //   } catch (e) {
+  //     emit(
+  //       TeacherError('Erreur lors de la mise à jour du plan: ${e.toString()}'),
+  //     );
+  //   }
+  // }
 }

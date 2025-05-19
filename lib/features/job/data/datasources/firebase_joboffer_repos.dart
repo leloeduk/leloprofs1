@@ -1,12 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:leloprof/features/job/data/models/joboffer_model.dart';
+import 'package:leloprof/features/job/domain/models/joboffer_model.dart';
 
-import 'joboffer_repository.dart';
+import '../../domain/repositories/joboffer_repository.dart';
 
-class JobOfferRepositoryImpl implements JobOfferRepository {
-  final FirebaseFirestore firestore;
-
-  JobOfferRepositoryImpl({required this.firestore});
+class FirebaseJobofferRepos implements JobOfferRepository {
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   CollectionReference get _jobOffersRef => firestore.collection('jobOffers');
 

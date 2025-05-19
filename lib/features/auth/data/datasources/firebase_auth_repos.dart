@@ -1,17 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'auth_repository.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../../domain/entities/user_model.dart';
 
-class FirebaseAuthRepository implements AuthRepository {
+class FirebaseAuthRepos implements AuthRepository {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
 
-  FirebaseAuthRepository({FirebaseAuth? firebaseAuth})
+  FirebaseAuthRepos({FirebaseAuth? firebaseAuth})
     : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   @override
-  Future<User?> signInWithGoogle() async {
+  Future<UserModel?> signInWithGoogle() async {
     try {
       print("🔵 1. Début de signInWithGoogle()");
 
@@ -42,7 +44,16 @@ class FirebaseAuthRepository implements AuthRepository {
           .signInWithCredential(credential);
 
       print("🟢 8. Firebase Auth réussi! UID: ${userCredential.user?.uid}");
-      return userCredential.user;
+      UserModel userModel = UserModel(
+        uid: userCredential.user!.uid,
+        email: userCredential.user!.email!,
+        displayName: userCredential.user?.displayName,
+      );
+      await _firebaseFirestore
+          .collection("users")
+          .doc(userModel.uid)
+          .set(UserModel.fromJson as Map<String, dynamic>);
+      return userModel;
     } catch (e, stackTrace) {
       print("🔴 ERREUR CRITIQUE dans signInWithGoogle():");
       print("🔴 Message: $e");
@@ -69,10 +80,17 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  User? getCurrentUser() {
-    final user = _firebaseAuth.currentUser;
-    print("ℹ️ Utilisateur actuel: ${user?.uid ?? 'null'}");
-    return user;
+  UserModel? getCurrentUser() {
+    final userModel = _firebaseAuth.currentUser;
+    if (userModel == null) {
+      return null;
+    }
+    print("ℹ️ Utilisateur actuel: ${userModel.uid}");
+    return UserModel(
+      uid: userModel.uid,
+      email: userModel.email!,
+      displayName: userModel.displayName,
+    );
   }
 
   @override
@@ -82,38 +100,21 @@ class FirebaseAuthRepository implements AuthRepository {
     return hasUser;
   }
 
-  @override
-  Future<void> updateAccountType(String uid, String accountType) async {
-    try {
-      print("🔵 Mise à jour du type de compte pour l'utilisateur $uid");
+  // @override
+  // Future<void> updateAccountType(String uid, String accountType) async {
+  //   try {
+  //     print("🔵 Mise à jour du type de compte pour l'utilisateur $uid");
 
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'accountType': accountType,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+  //     await FirebaseFirestore.instance.collection('users').doc(uid).set({
+  //       'accountType': accountType,
+  //       'updatedAt': FieldValue.serverTimestamp(),
+  //     }, SetOptions(merge: true));
 
-      print("🟢 Type de compte mis à jour: $accountType");
-      return; // ✅ Ajout du return ici
-    } catch (e) {
-      print("🔴 Erreur lors de la mise à jour du type de compte: $e");
-      rethrow;
-    }
-  }
-
-  @override
-  Future<User?> getUserById(String uid) async {
-    try {
-      final currentUser = _firebaseAuth.currentUser;
-      if (currentUser != null && currentUser.uid == uid) {
-        print("ℹ️ Récupération de l'utilisateur courant par ID");
-        return currentUser;
-      } else {
-        print("⚠️ Aucun utilisateur courant ne correspond à l'UID");
-        return null;
-      }
-    } catch (e) {
-      print("🔴 Erreur dans getUserById: $e");
-      rethrow;
-    }
-  }
+  //     print("🟢 Type de compte mis à jour: $accountType");
+  //     return; // ✅ Ajout du return ici
+  //   } catch (e) {
+  //     print("🔴 Erreur lors de la mise à jour du type de compte: $e");
+  //     rethrow;
+  //   }
+  // }
 }

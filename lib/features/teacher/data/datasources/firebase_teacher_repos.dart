@@ -1,11 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'teacher_repository.dart';
-import '../models/teacher_model.dart';
+import '../../domain/repositories/teacher_repository.dart';
+import '../../domain/models/teacher_model.dart';
 
-class TeacherRepositoryImpl implements TeacherRepository {
-  final FirebaseFirestore firestore;
-
-  TeacherRepositoryImpl({required this.firestore});
+class FirebaseTeacherRepos implements TeacherRepository {
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   CollectionReference get _teachersRef => firestore.collection('teachers');
 
@@ -15,19 +13,19 @@ class TeacherRepositoryImpl implements TeacherRepository {
     return snapshot.docs
         .map(
           (doc) =>
-              TeacherModel.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+              TeacherModel.fromJson(doc.data() as Map<String, dynamic>, doc.id),
         )
         .toList();
   }
 
   @override
   Future<void> createTeacher(TeacherModel teacher) async {
-    await _teachersRef.doc(teacher.id).set(teacher.toMap());
+    await _teachersRef.doc(teacher.uid).set(teacher.toMap());
   }
 
   @override
   Future<void> updateTeacher(TeacherModel teacher) async {
-    await _teachersRef.doc(teacher.id).update(teacher.toMap());
+    await _teachersRef.doc(teacher.uid).update(teacher.toMap());
   }
 
   @override
@@ -39,14 +37,14 @@ class TeacherRepositoryImpl implements TeacherRepository {
   Future<TeacherModel?> getTeacherById(String id) async {
     final doc = await _teachersRef.doc(id).get();
     if (doc.exists) {
-      return TeacherModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      return TeacherModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
     }
     return null;
   }
 
   // Nouvelle méthode pour gérer le plan d’un enseignant
-  @override
-  Future<void> updateTeacherPlan(String teacherId, String newPlan) async {
-    await _teachersRef.doc(teacherId).update({'plan': newPlan});
-  }
+  //   @override
+  //   Future<void> updateTeacherPlan(String teacherId, String newPlan) async {
+  //     await _teachersRef.doc(teacherId).update({'plan': newPlan});
+  //   }
 }

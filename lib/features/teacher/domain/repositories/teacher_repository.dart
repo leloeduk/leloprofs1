@@ -4,9 +4,9 @@ abstract class TeacherRepository {
   Future<List<TeacherModel>> fetchAllTeachers();
   Future<void> createTeacher(TeacherModel teacher);
   Future<void> updateTeacher(TeacherModel teacher);
-  Future<void> deleteTeacher(String id);
-  Future<TeacherModel?> getTeacherById(String id);
+  Future<void> deleteTeacher(String uid);
+  Future<TeacherModel?> getTeacherById(String uid);
 
   // Nouvelle méthode pour mettre à jour uniquement le plan d'un enseignant
-  Future<void> updateTeacherPlan(String teacherId, String newPlan);
+  // Future<void> updateTeacherPlan(String teacherId, String newPlan);
 }

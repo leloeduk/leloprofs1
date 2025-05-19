@@ -1,12 +1,9 @@
-import 'package:equatable/equatable.dart';
+import '../../../auth/domain/entities/user_model.dart';
 
-class TeacherModel extends Equatable {
-  final String id;
+class TeacherModel extends UserModel {
   final String firstName;
   final String lastName;
-  final String email;
   final String phoneNumber;
-  final String? profileImage;
   final String department;
   final List<String> diplomas;
   final int yearsOfExperience;
@@ -15,16 +12,15 @@ class TeacherModel extends Equatable {
   final List<String> languages;
   final double? rating;
   final bool isAvailable;
-  final String plan;
   final bool isInspector;
 
   const TeacherModel({
-    required this.id,
+    required super.uid,
     required this.firstName,
     required this.lastName,
-    required this.email,
+    required super.email,
     required this.phoneNumber,
-    this.profileImage,
+    required super.photoUrl,
     required this.department,
     required this.diplomas,
     required this.yearsOfExperience,
@@ -33,18 +29,17 @@ class TeacherModel extends Equatable {
     required this.languages,
     this.rating,
     required this.isAvailable,
-    this.plan = 'free',
+    required super.plan,
     this.isInspector = false, // ✅ valeur par défaut
   });
 
-  @override
   List<Object?> get props => [
-    id,
+    uid,
     firstName,
     lastName,
     email,
     phoneNumber,
-    profileImage,
+    photoUrl,
     department,
     diplomas,
     yearsOfExperience,
@@ -59,12 +54,12 @@ class TeacherModel extends Equatable {
 
   factory TeacherModel.fromMap(Map<String, dynamic> map, String docId) {
     return TeacherModel(
-      id: docId,
+      uid: docId,
       firstName: map['firstName'] ?? '',
       lastName: map['lastName'] ?? '',
       email: map['email'] ?? '',
       phoneNumber: map['phoneNumber'] ?? '',
-      profileImage: map['profileImage'],
+      photoUrl: map['photoUrl'],
       department: map['department'] ?? '',
       diplomas: List<String>.from(map['diplomas'] ?? []),
       yearsOfExperience: map['yearsOfExperience'] ?? 0,
@@ -78,13 +73,14 @@ class TeacherModel extends Equatable {
     );
   }
 
+  @override
   Map<String, dynamic> toMap() {
     return {
       'firstName': firstName,
       'lastName': lastName,
       'email': email,
       'phoneNumber': phoneNumber,
-      'profileImage': profileImage,
+      'photoUrl': photoUrl,
       'department': department,
       'diplomas': diplomas,
       'yearsOfExperience': yearsOfExperience,
@@ -98,41 +94,42 @@ class TeacherModel extends Equatable {
     };
   }
 
-  TeacherModel copyWith({
-    String? id,
-    String? firstName,
-    String? lastName,
-    String? email,
-    String? phoneNumber,
-    String? profileImage,
-    String? department,
-    List<String>? diplomas,
-    int? yearsOfExperience,
-    List<String>? educationCycles,
-    List<String>? subjects,
-    List<String>? languages,
-    double? rating,
-    bool? isAvailable,
-    String? plan,
-    bool? isInspector,
-  }) {
-    return TeacherModel(
-      id: id ?? this.id,
-      firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
-      email: email ?? this.email,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
-      profileImage: profileImage ?? this.profileImage,
-      department: department ?? this.department,
-      diplomas: diplomas ?? this.diplomas,
-      yearsOfExperience: yearsOfExperience ?? this.yearsOfExperience,
-      educationCycles: educationCycles ?? this.educationCycles,
-      subjects: subjects ?? this.subjects,
-      languages: languages ?? this.languages,
-      rating: rating ?? this.rating,
-      isAvailable: isAvailable ?? this.isAvailable,
-      plan: plan ?? this.plan,
-      isInspector: isInspector ?? this.isInspector,
-    );
-  }
+  //   @override
+  //   TeacherModel copyWith({
+  //     String? firstName,
+  //     String? displayName,
+  //     String? lastName,
+  //     String? phoneNumber,
+  //     String? photoUrl,
+  //     String? department,
+  //     List<String>? diplomas,
+  //     int? yearsOfExperience,
+  //     List<String>? educationCycles,
+  //     List<String>? subjects,
+  //     List<String>? languages,
+  //     double? rating,
+  //     bool? isAvailable,
+  //     String? plan,
+  //     bool? isInspector,
+  //   }) {
+  //     return TeacherModel(
+  //       uid: uid ?? this.uid,
+  //       firstName: firstName ?? this.firstName,
+  //       lastName: lastName ?? this.lastName,
+  //       email: email ?? this.email,
+  //       phoneNumber: phoneNumber ?? this.phoneNumber,
+  //       photoUrl: photoUrl ?? this.photoUrl,
+  //       department: department ?? this.department,
+  //       diplomas: diplomas ?? this.diplomas,
+  //       yearsOfExperience: yearsOfExperience ?? this.yearsOfExperience,
+  //       educationCycles: educationCycles ?? this.educationCycles,
+  //       subjects: subjects ?? this.subjects,
+  //       languages: languages ?? this.languages,
+  //       rating: rating ?? this.rating,
+  //       isAvailable: isAvailable ?? this.isAvailable,
+  //       plan: plan ?? this.plan,
+  //       isInspector: isInspector ?? this.isInspector,
+  //     );
+  //   }
+  // }
 }

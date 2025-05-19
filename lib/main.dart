@@ -2,66 +2,58 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_bloc.dart';
-import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_state.dart';
-import 'package:leloprof/features/auth/presentation/pages/home_page.dart';
-import 'package:leloprof/firebase_options.dart';
-
-import 'features/auth/data/repositories/auth_repository.dart';
-import 'features/auth/data/repositories/firebase_auth_repos_impl.dart';
-import 'features/auth/presentation/pages/singup_page.dart';
+import 'package:leloprof/features/job/data/datasources/firebase_joboffer_repos.dart';
+import 'package:leloprof/features/job/presentation/bloc/bloc/joboffer_bloc.dart';
+import 'package:leloprof/features/school/data/datasources/firebase_school_repos.dart';
+import 'package:leloprof/features/school/presentation/bloc/bloc/school_bloc.dart';
+import 'package:leloprof/features/teacher/data/datasources/firebase_teacher_repos.dart';
+import 'package:leloprof/config/firebase_options.dart';
+import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_bloc.dart';
+import 'features/auth/data/datasources/firebase_auth_repos.dart';
+import 'features/auth/presentation/pages/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Création de l'instance concrète
-  final authRepository = FirebaseAuthRepository();
-
-  runApp(MyApp(authRepository: authRepository));
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final AuthRepository authRepository;
-
-  const MyApp({super.key, required this.authRepository});
+  MyApp({super.key});
+  final firebaseAuthRepository = FirebaseAuthRepos();
+  final firebaseJobofferRepos = FirebaseJobofferRepos();
+  final firebaseTeacherRepos = FirebaseTeacherRepos();
+  final firebaseSchollRepos = FirebaseSchoolRepos();
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => AuthBloc(authRepository), // Injection de la dépendance
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create:
+              (_) => AuthBloc(
+                firebaseAuthRepository,
+              ), // Injection de la dépendance
+        ),
+        BlocProvider(
+          create:
+              (_) => TeacherBloc(
+                teacherRepository: FirebaseTeacherRepos(),
+              ), // Injection de la dépendance
+        ),
+        BlocProvider(
+          create: (_) => SchoolBloc(schoolRepository: FirebaseSchoolRepos()),
+        ),
+        BlocProvider(
+          create:
+              (_) => JobOfferBloc(
+                jobOfferRepository: FirebaseJobofferRepos(),
+              ), // Injection de la dépendance
+        ),
+      ],
       child: MaterialApp(title: 'LeloProf', home: const AuthWrapper()),
-    );
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocConsumer<AuthBloc, AuthState>(
-      builder: (context, state) {
-        if (state is Authenticated) {
-          return const HomePage();
-        } else if (state is AuthInitial || state is AuthError) {
-          return const SignupPage();
-        } else if (state is Unauthenticated) {
-          return const SignupPage();
-        }
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      listener: (context, state) {
-        if (state is Unauthenticated) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Erreur d'authentification ")));
-        } else if (state is AuthError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
-        }
-      },
     );
   }
 }

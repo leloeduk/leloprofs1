@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_bloc.dart';
+import 'package:leloprof/features/school/presentation/bloc/bloc/school_bloc.dart';
 import '../../../job/presentation/pages/joboffer_page.dart';
 import '../../../school/presentation/pages/school_page.dart';
 import '../../../teacher/presentation/pages/teacher_page.dart';
+import '../../domain/entities/user_model.dart';
 import '../bloc/bloc/auth_event.dart';
 import '../bloc/bloc/auth_state.dart';
-
-// Importez ici vos pages de tabs
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,117 +17,212 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  TabController? _tabController;
+  int _currentIndex = 0;
+  String? selectedSchoolId;
+
+  List<Widget> get _pages => [TeachersPage(), SchoolsPage(), JobofferPage()];
+
+  @override
+  void initState() {
+    final user = context.read<AuthBloc>().state;
+    super.initState();
+  }
+
+  final List<String> _titles = ['Enseignants', 'Écoles', 'Offres d\'emploi'];
 
   @override
   Widget build(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
     if (authState is! Authenticated) {
-      return const Scaffold(
-        body: Center(child: Text('Utilisateur non authentifié')),
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    final user = authState.userModel;
+
+    return Scaffold(
+      drawer: _buildDrawer(context, user),
+      appBar: AppBar(
+        title: Text(_titles[_currentIndex]),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => context.read<AuthBloc>().add(SignOutRequested()),
+            tooltip: 'Déconnexion',
+          ),
+        ],
+      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
+      bottomNavigationBar: _buildBottomNavBar(),
+      floatingActionButton: _buildFAB(context),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: (index) => setState(() => _currentIndex = index),
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Enseignants'),
+        BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Écoles'),
+        BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Offres'),
+      ],
+      selectedItemColor: Colors.blue,
+      unselectedItemColor: Colors.grey,
+      showUnselectedLabels: true,
+      type: BottomNavigationBarType.fixed,
+    );
+  }
+
+  Widget? _buildFAB(BuildContext context) {
+    if (_currentIndex == 2) {
+      // Only show FAB on Job Offers page
+      return FloatingActionButton(
+        child: const Icon(Icons.add),
+        onPressed: () {
+          // Naviguer vers la page de création d'offre
+        },
+        tooltip: 'Nouvelle offre',
       );
     }
-    final user = authState.user;
+    return null;
+  }
 
-    return DefaultTabController(
-      length: 3,
-      child: Builder(
-        builder: (BuildContext context) {
-          // Récupère le TabController dans le bon contexte
-          _tabController = DefaultTabController.of(context);
-
-          return Scaffold(
-            drawer: _buildDrawer(context, _tabController!),
-            appBar: AppBar(
-              title: const Text('Accueil'),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed:
-                      () => context.read<AuthBloc>().add(SignOutRequested()),
-                ),
-              ],
-              bottom: const TabBar(
-                tabs: [
-                  Tab(icon: Icon(Icons.person), text: 'Enseignants'),
-                  Tab(icon: Icon(Icons.school), text: 'Écoles'),
-                  Tab(icon: Icon(Icons.work), text: 'Offres'),
-                ],
+  Drawer _buildDrawer(BuildContext context, UserModel user) {
+    return Drawer(
+      child: Column(
+        children: [
+          UserAccountsDrawerHeader(
+            accountName: Text(user.displayName ?? 'Utilisateur'),
+            accountEmail: Text(user.email),
+            currentAccountPicture:
+                user.photoUrl != null
+                    ? CircleAvatar(
+                      backgroundImage: NetworkImage(user.photoUrl!),
+                    )
+                    : const CircleAvatar(child: Icon(Icons.person)),
+            decoration: const BoxDecoration(
+              color: Colors.blue,
+              image: DecorationImage(
+                image: AssetImage('assets/images/drawer_bg.jpg'),
+                fit: BoxFit.cover,
+                opacity: 0.7,
               ),
             ),
-            body: Column(
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Bienvenue, ${user.displayName ?? 'Utilisateur'}',
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                      Text('Email: ${user.email ?? 'Non renseigné'}'),
-                      Text('UID: ${user.uid ?? 'N/A'}'),
-                      const SizedBox(height: 8),
-                      if (user.photoURL != null)
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundImage: NetworkImage(user.photoURL!),
-                        ),
-                    ],
-                  ),
+                _createDrawerItem(
+                  context,
+                  icon: Icons.person,
+                  text: 'Profil',
+                  onTap: () => _showUserProfile(context, user),
+                ),
+                _createDrawerItem(
+                  context,
+                  icon: Icons.settings,
+                  text: 'Paramètres',
+                  onTap: () {},
                 ),
                 const Divider(),
-                Expanded(
-                  child: TabBarView(
-                    children: [TeachersPage(), SchoolsPage(), JobOffersPage()],
-                  ),
+                _createDrawerItem(
+                  context,
+                  icon: Icons.person,
+                  text: 'Enseignants',
+                  onTap: () => _navigateToPage(0),
+                ),
+                _createDrawerItem(
+                  context,
+                  icon: Icons.school,
+                  text: 'Écoles',
+                  onTap: () => _navigateToPage(1),
+                ),
+                _createDrawerItem(
+                  context,
+                  icon: Icons.work,
+                  text: 'Offres',
+                  onTap: () => _navigateToPage(2),
+                ),
+                const Divider(),
+                _createDrawerItem(
+                  context,
+                  icon: Icons.help,
+                  text: 'Aide',
+                  onTap: () {},
                 ),
               ],
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 
-  Drawer _buildDrawer(BuildContext context, TabController tabController) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Text(
-              'Menu',
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
+  Widget _createDrawerItem(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.blue),
+      title: Text(text),
+      onTap: () {
+        onTap();
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  void _navigateToPage(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+  void _showUserProfile(BuildContext context, UserModel user) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 50,
+                backgroundImage:
+                    user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
+                child:
+                    user.photoUrl == null
+                        ? const Icon(Icons.person, size: 50)
+                        : null,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                user.displayName ?? 'Non renseigné',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(user.email),
+              const SizedBox(height: 16),
+              Chip(
+                label: Text(
+                  user.role.toString(),
+                  style: const TextStyle(color: Colors.white),
+                ),
+                backgroundColor: Colors.blue,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Fermer'),
+              ),
+            ],
           ),
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Enseignants'),
-            onTap: () {
-              tabController.animateTo(0);
-              Navigator.of(context).pop();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.school),
-            title: const Text('Écoles'),
-            onTap: () {
-              tabController.animateTo(1);
-              Navigator.of(context).pop();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.work),
-            title: const Text('Offres d\'emploi'),
-            onTap: () {
-              tabController.animateTo(2);
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

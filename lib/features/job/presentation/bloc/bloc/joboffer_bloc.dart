@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import '../../../data/repositories/joboffer_repository.dart';
+import '../../../domain/repositories/joboffer_repository.dart';
 import 'joboffer_event.dart';
 import 'joboffer_state.dart';
 
@@ -21,7 +21,7 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
     emit(JobOfferLoading());
     try {
       final jobOffers = await jobOfferRepository.fetchAllJobOffers();
-      emit(JobOfferLoaded(jobOffers));
+      emit(JobOffersLoaded(jobOffers));
     } catch (e) {
       emit(
         JobOfferError('Erreur lors du chargement des offres : ${e.toString()}'),
@@ -35,9 +35,9 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
   ) async {
     emit(JobOfferLoading());
     try {
-      await jobOfferRepository.createJobOffer(event.jobOffer);
+      await jobOfferRepository.createJobOffer(event.offer);
       final jobOffers = await jobOfferRepository.fetchAllJobOffers();
-      emit(JobOfferLoaded(jobOffers));
+      emit(JobOffersLoaded(jobOffers));
     } catch (e) {
       emit(
         JobOfferError(
@@ -53,9 +53,9 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
   ) async {
     emit(JobOfferLoading());
     try {
-      await jobOfferRepository.updateJobOffer(event.jobOffer);
+      await jobOfferRepository.updateJobOffer(event.offer);
       final jobOffers = await jobOfferRepository.fetchAllJobOffers();
-      emit(JobOfferLoaded(jobOffers));
+      emit(JobOffersLoaded(jobOffers));
     } catch (e) {
       emit(
         JobOfferError(
@@ -71,9 +71,9 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
   ) async {
     emit(JobOfferLoading());
     try {
-      await jobOfferRepository.deleteJobOffer(event.id);
+      await jobOfferRepository.deleteJobOffer(event.offerId);
       final jobOffers = await jobOfferRepository.fetchAllJobOffers();
-      emit(JobOfferLoaded(jobOffers));
+      emit(JobOffersLoaded(jobOffers));
     } catch (e) {
       emit(
         JobOfferError(

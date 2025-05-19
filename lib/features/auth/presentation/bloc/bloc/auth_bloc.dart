@@ -1,5 +1,5 @@
 import 'package:bloc/bloc.dart';
-import '../../../data/repositories/auth_repository.dart';
+import '../../../domain/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -10,41 +10,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<GoogleSignInRequested>(_onGoogleSignIn);
     on<SignOutRequested>(_onSignOut);
     on<CheckAuthFromCache>(_onCheckAuthFromCache);
-    on<UpdateAccountType>(_onUpdateAccountType);
+    // on<UpdateAccountType>(_onUpdateAccountType);
   }
 
-  Future<void> _onUpdateAccountType(
-    UpdateAccountType event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(AuthLoading());
+  // Future<void> _onUpdateAccountType(
+  //   UpdateAccountType event,
+  //   Emitter<AuthState> emit,
+  // ) async {
+  //   emit(AuthLoading());
 
-    try {
-      final user = authRepository.getCurrentUser();
-      if (user == null) {
-        emit(Unauthenticated());
-        return;
-      }
+  //   try {
+  //     final user = authRepository.getCurrentUser();
+  //     if (user == null) {
+  //       emit(Unauthenticated());
+  //       return;
+  //     }
 
-      // Mise à jour du type de compte
-      await authRepository.updateAccountType(user.uid, event.accountType);
+  //     // Mise à jour du type de compte
+  //     await authRepository.updateAccountType(user.uid, event.accountType);
 
-      // Récupère les infos utilisateur mises à jour
-      final updatedUser = await authRepository.getUserById(user.uid);
+  //     // Récupère les infos utilisateur mises à jour
+  //     final updatedUser = await authRepository.getUserById(user.uid);
 
-      if (updatedUser != null) {
-        emit(Authenticated(updatedUser)); // utilisateur mis à jour
-      } else {
-        emit(
-          AuthError("Impossible de récupérer l'utilisateur après mise à jour."),
-        );
-        emit(Unauthenticated());
-      }
-    } catch (e) {
-      emit(AuthError("Erreur mise à jour type compte: ${e.toString()}"));
-      emit(Unauthenticated());
-    }
-  }
+  //     if (updatedUser != null) {
+  //       emit(Authenticated(updatedUser)); // utilisateur mis à jour
+  //     } else {
+  //       emit(
+  //         AuthError("Impossible de récupérer l'utilisateur après mise à jour."),
+  //       );
+  //       emit(Unauthenticated());
+  //     }
+  //   } catch (e) {
+  //     emit(AuthError("Erreur mise à jour type compte: ${e.toString()}"));
+  //     emit(Unauthenticated());
+  //   }
+  // }
 
   Future<void> _onGoogleSignIn(
     GoogleSignInRequested event,

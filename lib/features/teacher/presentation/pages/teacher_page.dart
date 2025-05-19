@@ -31,28 +31,28 @@ class TeachersPage extends StatelessWidget {
               itemBuilder: (context, index) {
                 final teacher = teachers[index];
                 return ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage:
-                        teacher.profileImage != null
-                            ? NetworkImage(teacher.profileImage!)
-                            : null,
-                    child:
-                        teacher.profileImage == null
-                            ? const Icon(Icons.person)
-                            : null,
-                  ),
-                  title: Text(teacher.firstName ?? 'Nom inconnu'),
+                  // leading: CircleAvatar(
+                  //   backgroundImage:
+                  //       teacher. != null
+                  //           ? NetworkImage(teacher.profileImage!)
+                  //           : null,
+                  //   child:
+                  //       teacher.profileImage == null
+                  //           ? const Icon(Icons.person)
+                  //           : null,
+                  // ),
+                  title: Text(teacher.firstName),
                   subtitle: Text(
-                    '${teacher.subjects.first ?? ''} • ${teacher.department ?? ''}',
+                    '${teacher.subjects.first} • ${teacher.department}',
                   ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      context.read<TeacherBloc>().add(
-                        DeleteTeacher(teacher.id),
-                      );
-                    },
-                  ),
+                  // trailing: IconButton(
+                  //   icon: const Icon(Icons.delete),
+                  //   onPressed: () {
+                  //     context.read<TeacherBloc>().add(
+                  //       DeleteTeacher(teacher.uid),
+                  //     );
+                  // },
+                  // ),
                   onTap: () {
                     // Action quand on clique sur un enseignant (ex: détails, édition)
                   },
