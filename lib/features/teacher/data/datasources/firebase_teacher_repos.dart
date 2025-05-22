@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/repositories/teacher_repository.dart';
 import '../../domain/models/teacher_model.dart';
 
@@ -9,7 +10,9 @@ class FirebaseTeacherRepos implements TeacherRepository {
 
   @override
   Future<List<TeacherModel>> fetchAllTeachers() async {
-    final snapshot = await _teachersRef.get();
+    final current = FirebaseAuth.instance.currentUser!;
+    final snapshot =
+        await _teachersRef.where("uid", isEqualTo: current.uid).get();
     return snapshot.docs
         .map(
           (doc) =>

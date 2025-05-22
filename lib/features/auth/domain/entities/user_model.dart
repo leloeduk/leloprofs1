@@ -77,6 +77,12 @@ class UserModel extends Equatable {
     UserRole? role,
     UserPlan? plan,
     DateTime? planExpiryDate,
+    required String name,
+    String? bio,
+    required int yearOfEstablishment,
+    required String primaryPhone,
+    required String department,
+    required String town,
   }) {
     return UserModel(
       uid: uid, // Toujours conservé

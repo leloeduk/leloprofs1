@@ -31,13 +31,13 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Créer un compte'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Créer un compte'),
+      //   leading: IconButton(
+      //     icon: const Icon(Icons.arrow_back),
+      //     onPressed: () => Navigator.pop(context),
+      //   ),
+      // ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -59,7 +59,15 @@ class _SignupPageState extends State<SignupPage> {
             const SizedBox(height: 40),
             ElevatedButton.icon(
               icon: Image.asset('assets/logos/login.png', height: 24),
-              label: const Text('Continuer avec Google'),
+              label: Text(
+                'Continuer avec Google',
+                style: TextStyle(
+                  color:
+                      _termsAccepted && _privacyAccepted
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.secondary,
+                ),
+              ),
               onPressed:
                   _termsAccepted && _privacyAccepted
                       ? () =>

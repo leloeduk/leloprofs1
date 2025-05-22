@@ -6,57 +6,68 @@ import '../../domain/entities/user_model.dart';
 
 class FirebaseAuthRepos implements AuthRepository {
   final FirebaseAuth _firebaseAuth;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn;
+  final FirebaseFirestore _firestore;
 
-  FirebaseAuthRepos({FirebaseAuth? firebaseAuth})
-    : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+  FirebaseAuthRepos({
+    FirebaseAuth? firebaseAuth,
+    GoogleSignIn? googleSignIn,
+    FirebaseFirestore? firestore,
+  }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
+       _googleSignIn = googleSignIn ?? GoogleSignIn(),
+       _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<UserModel?> signInWithGoogle() async {
     try {
       print("🔵 1. Début de signInWithGoogle()");
 
-      print("🟠 2. Lancement de GoogleSignIn().signIn()...");
+      // Étape 1: Connexion avec Google
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
       if (googleUser == null) {
-        print("🔴 3. L'utilisateur a annulé la connexion Google");
+        print("🔴 Annulation de la connexion par l'utilisateur");
         return null;
       }
-      print("🟢 3. Google Sign-In réussi, email: ${googleUser.email}");
 
-      print("🟠 4. Obtention des credentials Google...");
+      // Étape 2: Authentification Google
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
-      print(
-        "🟢 5. Credentials obtenus (token: ${googleAuth.idToken != null ? 'OUI' : 'NON'})",
-      );
 
-      print("🟠 6. Création de AuthCredential...");
+      // Étape 3: Création des credentials Firebase
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      print("🟠 7. Tentative de connexion Firebase...");
+      // Étape 4: Connexion Firebase
       final UserCredential userCredential = await _firebaseAuth
           .signInWithCredential(credential);
 
-      print("🟢 8. Firebase Auth réussi! UID: ${userCredential.user?.uid}");
-      UserModel userModel = UserModel(
-        uid: userCredential.user!.uid,
-        email: userCredential.user!.email!,
-        displayName: userCredential.user?.displayName,
+      if (userCredential.user == null) {
+        throw Exception("Firebase User is null after sign in");
+      }
+
+      // Étape 5: Création du modèle utilisateur
+      final user = userCredential.user!;
+      final userModel = UserModel(
+        uid: user.uid,
+        email: user.email ?? 'no-email-provided',
+        displayName: user.displayName,
+        photoUrl: user.photoURL,
       );
-      await _firebaseFirestore
-          .collection("users")
-          .doc(userModel.uid)
-          .set(UserModel.fromJson as Map<String, dynamic>);
+
+      // // Étape 6: Sauvegarde dans Firestore
+      // await _firestore
+      //     .collection('users')
+      //     .doc(user.uid)
+      //     .set(
+      //       userModel.toMap(),
+      //       SetOptions(merge: true), // Fusionne si le document existe déjà
+      //     );
+
       return userModel;
     } catch (e, stackTrace) {
-      print("🔴 ERREUR CRITIQUE dans signInWithGoogle():");
-      print("🔴 Message: $e");
+      print("🔴 Erreur lors de la connexion Google: $e");
       print("🔴 StackTrace: $stackTrace");
       rethrow;
     }
@@ -64,57 +75,29 @@ class FirebaseAuthRepos implements AuthRepository {
 
   @override
   Future<void> signOut() async {
-    print("🔵 Début de signOut()");
     try {
-      print("🟠 Déconnexion de GoogleSignIn...");
-      await _googleSignIn.signOut();
-
-      print("🟠 Déconnexion de FirebaseAuth...");
-      await _firebaseAuth.signOut();
-
-      print("🟢 Déconnexion réussie");
+      await Future.wait([_googleSignIn.signOut(), _firebaseAuth.signOut()]);
     } catch (e) {
-      print("🔴 Erreur lors de signOut(): $e");
+      print("🔴 Erreur lors de la déconnexion: $e");
       rethrow;
     }
   }
 
   @override
   UserModel? getCurrentUser() {
-    final userModel = _firebaseAuth.currentUser;
-    if (userModel == null) {
-      return null;
-    }
-    print("ℹ️ Utilisateur actuel: ${userModel.uid}");
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return null;
+
     return UserModel(
-      uid: userModel.uid,
-      email: userModel.email!,
-      displayName: userModel.displayName,
+      uid: user.uid,
+      email: user.email ?? 'no-email',
+      displayName: user.displayName,
+      photoUrl: user.photoURL,
     );
   }
 
   @override
   Future<bool> hasCachedUser() async {
-    final hasUser = _firebaseAuth.currentUser != null;
-    print("ℹ️ Utilisateur en cache: $hasUser");
-    return hasUser;
+    return _firebaseAuth.currentUser != null;
   }
-
-  // @override
-  // Future<void> updateAccountType(String uid, String accountType) async {
-  //   try {
-  //     print("🔵 Mise à jour du type de compte pour l'utilisateur $uid");
-
-  //     await FirebaseFirestore.instance.collection('users').doc(uid).set({
-  //       'accountType': accountType,
-  //       'updatedAt': FieldValue.serverTimestamp(),
-  //     }, SetOptions(merge: true));
-
-  //     print("🟢 Type de compte mis à jour: $accountType");
-  //     return; // ✅ Ajout du return ici
-  //   } catch (e) {
-  //     print("🔴 Erreur lors de la mise à jour du type de compte: $e");
-  //     rethrow;
-  //   }
-  // }
 }

@@ -9,6 +9,7 @@ import 'package:leloprof/features/school/presentation/bloc/bloc/school_bloc.dart
 import 'package:leloprof/features/teacher/data/datasources/firebase_teacher_repos.dart';
 import 'package:leloprof/config/firebase_options.dart';
 import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_bloc.dart';
+import 'core/themes/theme_light.dart';
 import 'features/auth/data/datasources/firebase_auth_repos.dart';
 import 'features/auth/presentation/pages/auth_wrapper.dart';
 
@@ -53,7 +54,13 @@ class MyApp extends StatelessWidget {
               ), // Injection de la dépendance
         ),
       ],
-      child: MaterialApp(title: 'LeloProf', home: const AuthWrapper()),
+      child: MaterialApp(
+        // debugShowCheckedModeBanner: ,
+        theme: lightDatatheme,
+
+        title: 'LeloProf',
+        home: const AuthWrapper(),
+      ),
     );
   }
 }

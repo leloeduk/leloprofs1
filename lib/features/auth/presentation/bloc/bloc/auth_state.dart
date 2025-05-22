@@ -25,3 +25,12 @@ class AuthError extends AuthState {
   @override
   List<Object?> get props => [message];
 }
+
+class AccountTypeSelectionRequired extends AuthState {
+  final UserModel userModel;
+
+  AccountTypeSelectionRequired(this.userModel);
+
+  @override
+  List<Object?> get props => [userModel];
+}

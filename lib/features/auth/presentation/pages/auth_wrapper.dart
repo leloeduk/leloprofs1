@@ -13,11 +13,14 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
       builder: (context, state) {
+        print(state);
         if (state is Authenticated) {
           return const HomePage();
         } else if (state is AuthInitial || state is AuthError) {
+          print(state);
           return const SignupPage();
         } else if (state is Unauthenticated) {
+          print(state);
           return const SignupPage();
         }
         return const Scaffold(body: Center(child: CircularProgressIndicator()));

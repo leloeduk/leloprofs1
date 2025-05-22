@@ -12,10 +12,11 @@ class SignOutRequested extends AuthEvent {}
 class CheckAuthFromCache extends AuthEvent {}
 
 class UpdateAccountType extends AuthEvent {
+  final String uid; // <-- Ajouté
   final String accountType;
 
-  UpdateAccountType(this.accountType);
+  UpdateAccountType({required this.uid, required this.accountType});
 
   @override
-  List<Object> get props => [accountType]; // <-- ici c'est List<Object>, pas List<Object?>
+  List<Object> get props => [uid, accountType];
 }

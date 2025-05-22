@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_bloc.dart';
+import 'package:leloprof/features/auth/presentation/pages/drawer_page.dart';
 import 'package:leloprof/features/school/presentation/bloc/bloc/school_bloc.dart';
+import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_bloc.dart';
+
 import '../../../job/presentation/pages/joboffer_page.dart';
+import '../../../school/presentation/pages/school_edit.dart';
 import '../../../school/presentation/pages/school_page.dart';
+import '../../../teacher/presentation/pages/teacher_edit.dart';
 import '../../../teacher/presentation/pages/teacher_page.dart';
 import '../../domain/entities/user_model.dart';
 import '../bloc/bloc/auth_event.dart';
@@ -18,17 +23,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
-  String? selectedSchoolId;
 
-  List<Widget> get _pages => [TeachersPage(), SchoolsPage(), JobofferPage()];
+  final List<Widget> _pages = [
+    const JobofferPage(), // Offres d'emploi
+    const SchoolsPage(), // Écoles
+    const TeachersPage(), // Enseignants
+  ];
 
-  @override
-  void initState() {
-    final user = context.read<AuthBloc>().state;
-    super.initState();
-  }
-
-  final List<String> _titles = ['Enseignants', 'Écoles', 'Offres d\'emploi'];
+  final List<String> _titles = ['Offres d\'emploi', 'Écoles', 'Enseignants'];
 
   @override
   Widget build(BuildContext context) {
@@ -39,124 +41,76 @@ class _HomePageState extends State<HomePage> {
     final user = authState.userModel;
 
     return Scaffold(
-      drawer: _buildDrawer(context, user),
-      appBar: AppBar(
-        title: Text(_titles[_currentIndex]),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthBloc>().add(SignOutRequested()),
-            tooltip: 'Déconnexion',
-          ),
-        ],
-      ),
+      drawer: DrawerPage(user: user),
+      // appBar: AppBar(
+      //   title: Text(
+      //     user.email,
+      //     style: TextStyle(color: Theme.of(context).colorScheme.primary),
+      //   ),
+      //   centerTitle: true,
+      // ),
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: _buildBottomNavBar(),
       floatingActionButton: _buildFAB(context),
     );
   }
 
-  Widget _buildBottomNavBar() {
+  BottomNavigationBar _buildBottomNavBar() {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
       onTap: (index) => setState(() => _currentIndex = index),
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Enseignants'),
-        BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Écoles'),
         BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Offres'),
+        BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Écoles'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Enseignants'),
       ],
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
+      selectedItemColor: Theme.of(context).colorScheme.onPrimary,
+      unselectedItemColor: Theme.of(context).colorScheme.primary,
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
     );
   }
 
   Widget? _buildFAB(BuildContext context) {
-    if (_currentIndex == 2) {
-      // Only show FAB on Job Offers page
-      return FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () {
-          // Naviguer vers la page de création d'offre
-        },
-        tooltip: 'Nouvelle offre',
-      );
-    }
-    return null;
-  }
+    switch (_currentIndex) {
+      case 0:
+        return FloatingActionButton(
+          onPressed: () {
+            // TODO: Naviguer vers la page de création d'offre
+          },
+          tooltip: 'Nouvelle offre',
+          child: const Icon(Icons.add),
+        );
+      case 1:
+        return FloatingActionButton(
+          onPressed: () {
+            final teacher = context.read()<TeacherBloc>();
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(
 
-  Drawer _buildDrawer(BuildContext context, UserModel user) {
-    return Drawer(
-      child: Column(
-        children: [
-          UserAccountsDrawerHeader(
-            accountName: Text(user.displayName ?? 'Utilisateur'),
-            accountEmail: Text(user.email),
-            currentAccountPicture:
-                user.photoUrl != null
-                    ? CircleAvatar(
-                      backgroundImage: NetworkImage(user.photoUrl!),
-                    )
-                    : const CircleAvatar(child: Icon(Icons.person)),
-            decoration: const BoxDecoration(
-              color: Colors.blue,
-              image: DecorationImage(
-                image: AssetImage('assets/images/drawer_bg.jpg'),
-                fit: BoxFit.cover,
-                opacity: 0.7,
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _createDrawerItem(
-                  context,
-                  icon: Icons.person,
-                  text: 'Profil',
-                  onTap: () => _showUserProfile(context, user),
-                ),
-                _createDrawerItem(
-                  context,
-                  icon: Icons.settings,
-                  text: 'Paramètres',
-                  onTap: () {},
-                ),
-                const Divider(),
-                _createDrawerItem(
-                  context,
-                  icon: Icons.person,
-                  text: 'Enseignants',
-                  onTap: () => _navigateToPage(0),
-                ),
-                _createDrawerItem(
-                  context,
-                  icon: Icons.school,
-                  text: 'Écoles',
-                  onTap: () => _navigateToPage(1),
-                ),
-                _createDrawerItem(
-                  context,
-                  icon: Icons.work,
-                  text: 'Offres',
-                  onTap: () => _navigateToPage(2),
-                ),
-                const Divider(),
-                _createDrawerItem(
-                  context,
-                  icon: Icons.help,
-                  text: 'Aide',
-                  onTap: () {},
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+            //     builder: (_) => const EditTeacherPage(teacher: teacher.),
+            //   ),
+            // );
+          },
+          tooltip: 'Nouvel enseignant',
+          child: const Icon(Icons.person_add),
+        );
+      case 2:
+        return FloatingActionButton(
+          onPressed: () {
+            // context.read()<SchoolBloc>();
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (_) => const EditSchoolPage()),
+            // );
+          },
+          tooltip: 'Nouvelle école',
+          child: const Icon(Icons.school),
+        );
+      default:
+        return null;
+    }
   }
 
   Widget _createDrawerItem(
@@ -169,8 +123,8 @@ class _HomePageState extends State<HomePage> {
       leading: Icon(icon, color: Colors.blue),
       title: Text(text),
       onTap: () {
-        onTap();
         Navigator.pop(context);
+        onTap();
       },
     );
   }
@@ -184,7 +138,7 @@ class _HomePageState extends State<HomePage> {
   void _showUserProfile(BuildContext context, UserModel user) {
     showModalBottomSheet(
       context: context,
-      builder: (context) {
+      builder: (_) {
         return Container(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -209,7 +163,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 16),
               Chip(
                 label: Text(
-                  user.role.toString(),
+                  user.role.name,
                   style: const TextStyle(color: Colors.white),
                 ),
                 backgroundColor: Colors.blue,

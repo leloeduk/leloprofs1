@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:leloprof/features/school/domain/repositories/school_repository.dart';
 
 import '../../domain/models/school_model.dart';
@@ -8,7 +9,12 @@ class FirebaseSchoolRepos implements SchoolRepository {
 
   @override
   Future<List<SchoolModel>> getSchools() async {
-    final snapshot = await firestore.collection('schools').get();
+    final current = FirebaseAuth.instance.currentUser!;
+    final snapshot =
+        await firestore
+            .collection('schools')
+            .where('Uid', isEqualTo: current.uid)
+            .get();
     return snapshot.docs
         .map((doc) => SchoolModel.fromJson(doc.data(), doc.id))
         .toList();
