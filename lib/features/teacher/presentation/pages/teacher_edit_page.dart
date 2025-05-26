@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../domain/models/teacher_model.dart';
 
-class EditTeacherPage extends StatefulWidget {
+class TeacherEditPage extends StatefulWidget {
   final TeacherModel teacher;
 
-  const EditTeacherPage({super.key, required this.teacher});
+  const TeacherEditPage({super.key, required this.teacher});
 
   @override
-  State<EditTeacherPage> createState() => _EditTeacherPageState();
+  State<TeacherEditPage> createState() => _EditTeacherPageState();
 }
 
-class _EditTeacherPageState extends State<EditTeacherPage> {
+class _EditTeacherPageState extends State<TeacherEditPage> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _firstNameController;
@@ -55,15 +55,15 @@ class _EditTeacherPageState extends State<EditTeacherPage> {
     );
 
     _diplomas = List.from(t.diplomas);
-    _educationCycles = List.from(t.languages);
+    _educationCycles = List.from(t.educationCycles);
     _subjects = List.from(t.subjects);
     _languages = List.from(t.languages);
 
     _isAvailable = t.isAvailable;
     _isInspector = t.isInspector;
 
-    _dateOfBirth = t.createdAt;
-    // _dateOfRecruitment = "";
+    _dateOfBirth = DateTime(1990, 1, 1);
+    _dateOfRecruitment = DateTime.now();
   }
 
   @override
@@ -83,7 +83,7 @@ class _EditTeacherPageState extends State<EditTeacherPage> {
     if (!_formKey.currentState!.validate()) return;
 
     final updatedTeacher = TeacherModel(
-      uid: widget.teacher.uid,
+      id: widget.teacher.id,
       email: widget.teacher.email,
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
@@ -100,25 +100,27 @@ class _EditTeacherPageState extends State<EditTeacherPage> {
       country: _countryController.text.trim(),
       diplomas: _diplomas,
       yearsOfExperience: int.parse(_yearsOfExperienceController.text.trim()),
-      // educationCycle: _educationCycles,
+      educationCycles: _educationCycles,
       subjects: _subjects,
       languages: _languages,
       isAvailable: _isAvailable,
       isInspector: _isInspector,
       // dateOfBirth: _dateOfBirth,
       // dateOfRecruitment: _dateOfRecruitment,
+      createdAt: widget.teacher.createdAt,
+      name: widget.teacher.name,
+      role: widget.teacher.role,
       // profileImage: widget.teacher.profileImage,
       // ratings: widget.teacher.ratings,
-      createdAt: DateTime.now(),
     );
 
-    // Met à jour Firestore ici
+    // TODO : Mettre à jour la base de données Firestore ici avec updatedTeacher
 
     Navigator.of(context).pop(updatedTeacher);
   }
 
   Future<void> _editList(String title, List<String> list) async {
-    final TextEditingController _itemController = TextEditingController();
+    final TextEditingController itemController = TextEditingController();
     await showDialog(
       context: context,
       builder:
@@ -131,7 +133,7 @@ class _EditTeacherPageState extends State<EditTeacherPage> {
                   ListTile(
                     title: Text(item),
                     trailing: IconButton(
-                      icon: Icon(Icons.delete),
+                      icon: Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
                         setState(() {
                           list.remove(item);
@@ -142,7 +144,7 @@ class _EditTeacherPageState extends State<EditTeacherPage> {
                     ),
                   ),
                 TextField(
-                  controller: _itemController,
+                  controller: itemController,
                   decoration: InputDecoration(labelText: 'Ajouter un élément'),
                 ),
               ],
@@ -150,9 +152,9 @@ class _EditTeacherPageState extends State<EditTeacherPage> {
             actions: [
               TextButton(
                 onPressed: () {
-                  if (_itemController.text.trim().isNotEmpty) {
+                  if (itemController.text.trim().isNotEmpty) {
                     setState(() {
-                      list.add(_itemController.text.trim());
+                      list.add(itemController.text.trim());
                     });
                   }
                   Navigator.of(context).pop();
@@ -255,11 +257,9 @@ class _EditTeacherPageState extends State<EditTeacherPage> {
                 ),
                 trailing: Icon(Icons.calendar_today),
                 onTap:
-                    () => _pickDate(
-                      context,
-                      _dateOfBirth,
-                      (date) => setState(() => _dateOfBirth = date),
-                    ),
+                    () => _pickDate(context, _dateOfBirth, (date) {
+                      setState(() => _dateOfBirth = date);
+                    }),
               ),
               ListTile(
                 title: Text(
@@ -267,11 +267,9 @@ class _EditTeacherPageState extends State<EditTeacherPage> {
                 ),
                 trailing: Icon(Icons.calendar_today),
                 onTap:
-                    () => _pickDate(
-                      context,
-                      _dateOfRecruitment,
-                      (date) => setState(() => _dateOfRecruitment = date),
-                    ),
+                    () => _pickDate(context, _dateOfRecruitment, (date) {
+                      setState(() => _dateOfRecruitment = date);
+                    }),
               ),
 
               const SizedBox(height: 16),

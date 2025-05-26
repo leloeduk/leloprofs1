@@ -1,5 +1,7 @@
-import 'package:bloc/bloc.dart';
-import '../../../domain/repositories/auth_repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:leloprof/features/auth/domain/repositories/auth_repository.dart';
+import '../../../../../core/services/sharedpreferences/shared_prefs.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -7,92 +9,70 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
 
   AuthBloc(this.authRepository) : super(AuthInitial()) {
-    on<GoogleSignInRequested>(_onGoogleSignIn);
-    on<SignOutRequested>(_onSignOut);
-    on<CheckAuthFromCache>(_onCheckAuthFromCache);
-    // on<UpdateAccountType>(_onUpdateAccountType);
+    on<AppStarted>(_onAppStarted);
+    on<SignInWithGoogleRequested>(_onGoogleSignInRequested);
+    on<SignOutRequested>(_onSignOutRequested);
+    on<UpdateUserRoleLocally>(_onUpdateUserRoleLocally);
+    on<MarkUserAsRegistered>(_onMarkUserAsRegistered);
   }
 
-  // Future<void> _onUpdateAccountType(
-  //   UpdateAccountType event,
-  //   Emitter<AuthState> emit,
-  // ) async {
-  //   emit(AuthLoading());
-
-  //   try {
-  //     final user = authRepository.getCurrentUser();
-  //     if (user == null) {
-  //       emit(Unauthenticated());
-  //       return;
-  //     }
-
-  //     // Mise à jour du type de compte
-  //     await authRepository.updateAccountType(user.uid, event.accountType);
-
-  //     // Récupère les infos utilisateur mises à jour
-  //     final updatedUser = await authRepository.getUserById(user.uid);
-
-  //     if (updatedUser != null) {
-  //       emit(Authenticated(updatedUser)); // utilisateur mis à jour
-  //     } else {
-  //       emit(
-  //         AuthError("Impossible de récupérer l'utilisateur après mise à jour."),
-  //       );
-  //       emit(Unauthenticated());
-  //     }
-  //   } catch (e) {
-  //     emit(AuthError("Erreur mise à jour type compte: ${e.toString()}"));
-  //     emit(Unauthenticated());
-  //   }
-  // }
-
-  Future<void> _onGoogleSignIn(
-    GoogleSignInRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    print("🔵 BLoC: Début de _onGoogleSignIn → Emission de AuthLoading");
-    emit(AuthLoading());
-
-    try {
-      print("🟠 BLoC: Appel à authRepository.signInWithGoogle()...");
-      final user = await authRepository.signInWithGoogle();
-
-      if (user != null) {
-        print("🟢 BLoC: Utilisateur connecté → Emission de Authenticated");
-        emit(Authenticated(user));
-      } else {
-        print(
-          "🟡 BLoC: Utilisateur null (annulé?) → Emission de Unauthenticated",
-        );
-        emit(Unauthenticated());
-      }
-    } catch (e) {
-      print("🔴 BLoC: Erreur → Emission de AuthError");
-      emit(AuthError("Erreur Google Sign-In: ${e.toString()}"));
-
-      print("🟡 BLoC: Après délai → Emission de Unauthenticated");
+  Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
+    final user = SharedPrefs.getUser();
+    if (user != null) {
+      emit(Authenticated(user));
+    } else {
       emit(Unauthenticated());
     }
   }
 
-  Future<void> _onCheckAuthFromCache(
-    CheckAuthFromCache event,
+  Future<void> _onGoogleSignInRequested(
+    SignInWithGoogleRequested event,
     Emitter<AuthState> emit,
   ) async {
-    print("🔵 BLoC: Vérification de l'utilisateur en cache");
     emit(AuthLoading());
-    final user = authRepository.getCurrentUser();
-    print("ℹ️ BLoC: Utilisateur en cache: ${user?.uid ?? 'null'}");
-    emit(user != null ? Authenticated(user) : Unauthenticated());
+    try {
+      final user = await authRepository.signInWithGoogle();
+      if (user != null) {
+        await SharedPrefs.saveUser(user);
+        emit(Authenticated(user));
+      } else {
+        emit(const AuthError("Google Sign-In failed."));
+      }
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
   }
 
-  Future<void> _onSignOut(
+  Future<void> _onSignOutRequested(
     SignOutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    print("🔵 BLoC: Début de la déconnexion");
     await authRepository.signOut();
-    print("🟢 BLoC: Déconnexion réussie → Emission de Unauthenticated");
+    await SharedPrefs.clear();
     emit(Unauthenticated());
+  }
+
+  Future<void> _onUpdateUserRoleLocally(
+    UpdateUserRoleLocally event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (state is Authenticated) {
+      final currentState = state as Authenticated;
+      final updatedUser = currentState.user.copyWith(role: event.role);
+      await SharedPrefs.saveUser(updatedUser); // <-- AJOUT IMPORTANT
+      emit(Authenticated(updatedUser));
+    }
+  }
+
+  Future<void> _onMarkUserAsRegistered(
+    MarkUserAsRegistered event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (state is Authenticated) {
+      final currentState = state as Authenticated;
+      final updatedUser = currentState.user.copyWith(isNewUser: false);
+      await SharedPrefs.saveUser(updatedUser); // <-- AJOUT IMPORTANT
+      emit(Authenticated(updatedUser));
+    }
   }
 }

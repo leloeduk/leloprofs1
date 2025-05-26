@@ -21,6 +21,7 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     emit(TeacherLoading());
     try {
       final teachers = await teacherRepository.fetchAllTeachers();
+      print(teachers);
       emit(TeacherLoaded(teachers));
     } catch (e) {
       emit(

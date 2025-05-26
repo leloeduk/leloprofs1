@@ -21,7 +21,12 @@ class TermsCheckbox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CheckboxListTile(
-      contentPadding: EdgeInsets.zero,
+      contentPadding: EdgeInsets.all(2),
+      checkColor: Colors.red,
+      // tileColor: Theme.of(context).colorScheme.primary,
+      activeColor: Colors.white,
+      checkboxScaleFactor: 1.3,
+
       dense: true,
       title: RichText(
         text: TextSpan(
@@ -31,7 +36,7 @@ class TermsCheckbox extends StatelessWidget {
             TextSpan(
               text: linkText,
               style: const TextStyle(
-                color: Colors.blue,
+                color: Colors.red,
                 decoration: TextDecoration.underline,
               ),
               recognizer: TapGestureRecognizer()..onTap = onLinkTap,

@@ -9,14 +9,16 @@ import 'package:leloprof/features/school/presentation/bloc/bloc/school_bloc.dart
 import 'package:leloprof/features/teacher/data/datasources/firebase_teacher_repos.dart';
 import 'package:leloprof/config/firebase_options.dart';
 import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_bloc.dart';
+import 'core/services/sharedpreferences/shared_prefs.dart';
 import 'core/themes/theme_light.dart';
 import 'features/auth/data/datasources/firebase_auth_repos.dart';
-import 'features/auth/presentation/pages/auth_wrapper.dart';
+import 'router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await SharedPrefs.init();
 
   runApp(MyApp());
 }
@@ -54,12 +56,12 @@ class MyApp extends StatelessWidget {
               ), // Injection de la dépendance
         ),
       ],
-      child: MaterialApp(
+      child: MaterialApp.router(
         // debugShowCheckedModeBanner: ,
         theme: lightDatatheme,
 
         title: 'LeloProf',
-        home: const AuthWrapper(),
+        routerConfig: appRouter,
       ),
     );
   }

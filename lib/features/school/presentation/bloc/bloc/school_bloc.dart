@@ -38,9 +38,14 @@ class SchoolBloc extends Bloc<SchoolEvent, SchoolState> {
     emit(SchoolLoading());
     try {
       final schools = await schoolRepository.getSchools();
+      print('Schools loaded: ${schools.length}');
+      if (schools.isEmpty) {
+        print('No schools found but no error');
+      }
       emit(SchoolLoaded(schools));
     } catch (e) {
-      emit(SchoolError("Erreur lors du chargement des écoles"));
+      print('Error loading schools: $e');
+      emit(SchoolError("Erreur lors du chargement: ${e.toString()}"));
     }
   }
 
@@ -79,56 +84,4 @@ class SchoolBloc extends Bloc<SchoolEvent, SchoolState> {
       emit(SchoolError("Erreur lors de la suppression de l'école"));
     }
   }
-
-  // Future<void> _onUpdateSchoolPlan(
-  //   UpdateSchoolPlan event,
-  //   Emitter<SchoolState> emit,
-  // ) async {
-  //   emit(SchoolLoading());
-  //   try {
-  //     await schoolRepository.updateSchoolPlan(event.schoolId, event.newPlan);
-  //     final schools = await schoolRepository.getSchools();
-  //     emit(SchoolLoaded(schools)); // on émet la liste mise à jour
-  //     // ou si tu préfères juste indiquer la réussite :
-  //     // emit(SchoolPlanUpdated());
-  //   } catch (e) {
-  //     emit(
-  //       SchoolError('Erreur lors de la mise à jour du plan: ${e.toString()}'),
-  //     );
-  //   }
-  // }
 }
-
-
-// // School Handlers
-// on<CreateSchoolProfile>((event, emit) async {
-//   emit(ProfileLoading());
-//   try {
-//     await schoolRepository.createSchool(event.school);
-//     emit(ProfileOperationSuccess('École créée avec succès'));
-//   } catch (e) {
-//     emit(ProfileError(e.toString()));
-//   }
-// });
-
-// on<UpdateSchoolProfile>((event, emit) async {
-//   emit(ProfileLoading());
-//   try {
-//     await schoolRepository.updateSchool(event.school);
-//     emit(SchoolProfileLoaded(event.school));
-//   } catch (e) {
-//     emit(ProfileError(e.toString()));
-//   }
-// });
-
-// on<DeleteSchoolProfile>((event, emit) async {
-//   emit(ProfileLoading());
-//   try {
-//     await schoolRepository.deleteSchool(event.uid);
-//     emit(ProfileOperationSuccess('École supprimée'));
-//   } catch (e) {
-//     emit(ProfileError(e.toString()));
-//   }
-// });
-
-// // Teacher Handlers (similaires)

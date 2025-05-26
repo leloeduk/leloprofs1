@@ -13,20 +13,19 @@ class FirebaseJobofferRepos implements JobOfferRepository {
     final snapshot = await _jobOffersRef.get();
     return snapshot.docs
         .map(
-          (doc) =>
-              JobOfferModel.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+          (doc) => JobOfferModel.fromJson(doc.data() as Map<String, dynamic>),
         )
         .toList();
   }
 
   @override
   Future<void> createJobOffer(JobOfferModel jobOffer) async {
-    await _jobOffersRef.doc(jobOffer.id).set(jobOffer.toMap());
+    await _jobOffersRef.doc(jobOffer.id).set(jobOffer.toJson());
   }
 
   @override
   Future<void> updateJobOffer(JobOfferModel jobOffer) async {
-    await _jobOffersRef.doc(jobOffer.id).update(jobOffer.toMap());
+    await _jobOffersRef.doc(jobOffer.id).update(jobOffer.toJson());
   }
 
   @override
@@ -38,7 +37,7 @@ class FirebaseJobofferRepos implements JobOfferRepository {
   Future<JobOfferModel?> getJobOfferById(String id) async {
     final doc = await _jobOffersRef.doc(id).get();
     if (doc.exists) {
-      return JobOfferModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      return JobOfferModel.fromJson(doc.data() as Map<String, dynamic>);
     }
     return null;
   }

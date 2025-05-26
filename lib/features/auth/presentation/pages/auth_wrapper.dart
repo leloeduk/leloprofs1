@@ -1,39 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../bloc/bloc/auth_bloc.dart';
-import '../bloc/bloc/auth_state.dart';
+import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_bloc.dart';
+import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_state.dart';
+import 'package:leloprof/features/auth/presentation/pages/singup_page.dart';
 import 'home_page.dart';
-import 'singup_page.dart';
+import 'role_selection_page.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthBloc, AuthState>(
+    return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        print(state);
         if (state is Authenticated) {
-          return const HomePage();
-        } else if (state is AuthInitial || state is AuthError) {
-          print(state);
+          // isNewUser a une valeur par défaut `true` dans UserModel.
+          // Le `?? true` est une sécurité supplémentaire si la valeur est null.
+          final isNewUser = state.user.isNewUser ?? true;
+
+          if (isNewUser) {
+            // Si l'utilisateur est considéré comme nouveau (n'a pas encore finalisé la sélection de rôle),
+            // on le dirige vers RoleSelectionPage.
+            // RoleSelectionPage est responsable de mettre à jour le rôle et de passer isNewUser à false.
+            return const RoleSelectionPage();
+          } else {
+            // Si l'utilisateur n'est pas nouveau (isNewUser est false),
+            // il a déjà configuré son rôle. Il est donc dirigé vers la HomePage.
+            // Le contenu de HomePage peut ensuite s'adapter en fonction du state.user.role.
+            return const HomePage();
+          }
+        } else if (state is AuthLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else {
           return const SignupPage();
-        } else if (state is Unauthenticated) {
-          print(state);
-          return const SignupPage();
-        }
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      listener: (context, state) {
-        if (state is Unauthenticated) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Erreur d'authentification ")));
-        } else if (state is AuthError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
     );

@@ -15,11 +15,24 @@ class TitleDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(4),
       child: ListTile(
-        leading: Icon(iconData),
-        title: Text(title),
-        trailing: Icon(Icons.arrow_circle_right_outlined),
+        leading: Icon(
+          size: 26,
+          iconData,
+          color: Theme.of(context).colorScheme.onSecondary,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.w400,
+            color: Theme.of(context).colorScheme.tertiary,
+          ),
+        ),
+        trailing: Icon(
+          Icons.arrow_circle_right_outlined,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         onTap: () {},
       ),
     );

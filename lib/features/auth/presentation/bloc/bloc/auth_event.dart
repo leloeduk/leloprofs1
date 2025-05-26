@@ -1,22 +1,22 @@
 import 'package:equatable/equatable.dart';
 
 abstract class AuthEvent extends Equatable {
+  const AuthEvent();
   @override
   List<Object> get props => [];
 }
 
-class GoogleSignInRequested extends AuthEvent {}
+class AppStarted extends AuthEvent {}
+
+class SignInWithGoogleRequested extends AuthEvent {}
 
 class SignOutRequested extends AuthEvent {}
 
-class CheckAuthFromCache extends AuthEvent {}
+class UpdateUserRoleLocally extends AuthEvent {
+  final String role;
+  const UpdateUserRoleLocally(this.role);
+}
 
-class UpdateAccountType extends AuthEvent {
-  final String uid; // <-- Ajouté
-  final String accountType;
-
-  UpdateAccountType({required this.uid, required this.accountType});
-
-  @override
-  List<Object> get props => [uid, accountType];
+class MarkUserAsRegistered extends AuthEvent {
+  const MarkUserAsRegistered();
 }

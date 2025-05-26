@@ -11,24 +11,20 @@ class FirebaseTeacherRepos implements TeacherRepository {
   @override
   Future<List<TeacherModel>> fetchAllTeachers() async {
     final current = FirebaseAuth.instance.currentUser!;
-    final snapshot =
-        await _teachersRef.where("uid", isEqualTo: current.uid).get();
+    final snapshot = await _teachersRef.get();
     return snapshot.docs
-        .map(
-          (doc) =>
-              TeacherModel.fromJson(doc.data() as Map<String, dynamic>, doc.id),
-        )
+        .map((doc) => TeacherModel.fromMap(doc.data() as Map<String, dynamic>))
         .toList();
   }
 
   @override
   Future<void> createTeacher(TeacherModel teacher) async {
-    await _teachersRef.doc(teacher.uid).set(teacher.toMap());
+    await _teachersRef.doc(teacher.id).set(teacher.toMap());
   }
 
   @override
   Future<void> updateTeacher(TeacherModel teacher) async {
-    await _teachersRef.doc(teacher.uid).update(teacher.toMap());
+    await _teachersRef.doc(teacher.id).update(teacher.toMap());
   }
 
   @override
@@ -40,7 +36,7 @@ class FirebaseTeacherRepos implements TeacherRepository {
   Future<TeacherModel?> getTeacherById(String id) async {
     final doc = await _teachersRef.doc(id).get();
     if (doc.exists) {
-      return TeacherModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
+      return TeacherModel.fromMap(doc.data() as Map<String, dynamic>);
     }
     return null;
   }

@@ -1,48 +1,31 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../../auth/domain/entities/user_model.dart';
 
 class TeacherModel extends UserModel {
-  // Informations personnelles
   final String firstName;
   final String lastName;
   final String phoneNumber;
   final String department;
-  final String? country; // Nouveau champ pays
-
-  // Coordonnées supplémentaires
-  final String? secondaryPhone; // Nouveau numéro secondaire
-  final String? emergencyContact; // Nouveau contact d'urgence
-
-  // Professionnel
+  final String? country;
+  final String? secondaryPhone;
+  final String? emergencyContact;
   final List<String> diplomas;
   final int yearsOfExperience;
+  final String? profileImageUrl;
   final List<String> educationCycles;
   final List<String> subjects;
   final List<String> languages;
   final double? rating;
-
-  // Statut
   final bool isAvailable;
   final bool isInspector;
-
-  // Dates importantes
-  final DateTime createdAt; // Date de création du compte
-  final DateTime? teacherSince; // Date de début dans l'enseignement
-  final DateTime?
-  lastAvailabilityUpdate; // Dernière modification de disponibilité
+  final DateTime createdAt;
+  final DateTime? teacherSince;
+  final DateTime? lastAvailabilityUpdate;
 
   const TeacherModel({
-    // UserModel (hérité)
-    required String uid,
-    required String email,
-    String? displayName,
-    String? photoUrl,
-    UserRole role = UserRole.teacher,
-    UserPlan plan = UserPlan.free,
-    DateTime? planExpiryDate,
-
-    // TeacherModel
+    required super.id,
+    required super.name,
+    required super.email,
+    required super.role,
     required this.firstName,
     required this.lastName,
     required this.phoneNumber,
@@ -50,106 +33,131 @@ class TeacherModel extends UserModel {
     this.country,
     this.secondaryPhone,
     this.emergencyContact,
-    this.diplomas = const [],
-    this.yearsOfExperience = 0,
-    this.educationCycles = const [],
-    this.subjects = const [],
-    this.languages = const [],
+    required this.diplomas,
+    required this.yearsOfExperience,
+    this.profileImageUrl,
+    required this.educationCycles,
+    required this.subjects,
+    required this.languages,
     this.rating,
-    this.isAvailable = true,
-    this.isInspector = false,
+    required this.isAvailable,
+    required this.isInspector,
     required this.createdAt,
     this.teacherSince,
     this.lastAvailabilityUpdate,
-  }) : super(
-         uid: uid,
-         email: email,
-         displayName:
-             displayName ?? '$firstName $lastName', // Nom complet par défaut
-         photoUrl: photoUrl,
-         role:
-             isInspector
-                 ? UserRole.inspector
-                 : role, // Auto-promotion si inspecteur
-         plan: plan,
-         planExpiryDate: planExpiryDate,
-       );
+  });
 
-  factory TeacherModel.fromJson(Map<String, dynamic> json, String id) {
+  @override
+  TeacherModel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? role,
+    bool? isNewUser,
+    String? firstName,
+    String? lastName,
+    String? phoneNumber,
+    String? department,
+    String? country,
+    String? secondaryPhone,
+    String? emergencyContact,
+    List<String>? diplomas,
+    int? yearsOfExperience,
+    String? profileImageUrl,
+    List<String>? educationCycles,
+    List<String>? subjects,
+    List<String>? languages,
+    double? rating,
+    bool? isAvailable,
+    bool? isInspector,
+    DateTime? createdAt,
+    DateTime? teacherSince,
+    DateTime? lastAvailabilityUpdate,
+  }) {
     return TeacherModel(
-      // UserModel
-      uid: json['uid'] as String,
-      email: json['email'] as String,
-      displayName: json['displayName'] as String?,
-      photoUrl: json['photoUrl'] as String?,
-      role: _parseUserRole(json['role'] as String?),
-      plan: _parseUserPlan(json['plan'] as String?),
-      planExpiryDate: json['planExpiryDate']?.toDate(),
-
-      // TeacherModel
-      firstName: json['firstName'] as String,
-      lastName: json['lastName'] as String,
-      phoneNumber: json['phoneNumber'] as String,
-      department: json['department'] as String,
-      country: json['country'] as String?,
-      secondaryPhone: json['secondaryPhone'] as String?,
-      emergencyContact: json['emergencyContact'] as String?,
-      diplomas: List<String>.from(json['diplomas'] as List? ?? []),
-      yearsOfExperience: json['yearsOfExperience'] as int? ?? 0,
-      educationCycles: List<String>.from(
-        json['educationCycles'] as List? ?? [],
-      ),
-      subjects: List<String>.from(json['subjects'] as List? ?? []),
-      languages: List<String>.from(json['languages'] as List? ?? []),
-      rating: json['rating'] as double?,
-      isAvailable: json['isAvailable'] as bool? ?? true,
-      isInspector: json['isInspector'] as bool? ?? false,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
-      teacherSince: json['teacherSince']?.toDate(),
-      lastAvailabilityUpdate: json['lastAvailabilityUpdate']?.toDate(),
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      department: department ?? this.department,
+      country: country ?? this.country,
+      secondaryPhone: secondaryPhone ?? this.secondaryPhone,
+      emergencyContact: emergencyContact ?? this.emergencyContact,
+      diplomas: diplomas ?? this.diplomas,
+      yearsOfExperience: yearsOfExperience ?? this.yearsOfExperience,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      educationCycles: educationCycles ?? this.educationCycles,
+      subjects: subjects ?? this.subjects,
+      languages: languages ?? this.languages,
+      rating: rating ?? this.rating,
+      isAvailable: isAvailable ?? this.isAvailable,
+      isInspector: isInspector ?? this.isInspector,
+      createdAt: createdAt ?? this.createdAt,
+      teacherSince: teacherSince ?? this.teacherSince,
+      lastAvailabilityUpdate:
+          lastAvailabilityUpdate ?? this.lastAvailabilityUpdate,
     );
   }
 
-  @override
-  Map<String, dynamic> toMap() {
-    return {
-      // UserModel
-      ...super.toMap(),
-
-      // TeacherModel
-      'firstName': firstName,
-      'lastName': lastName,
-      'phoneNumber': phoneNumber,
-      'department': department,
-      if (country != null) 'country': country,
-      if (secondaryPhone != null) 'secondaryPhone': secondaryPhone,
-      if (emergencyContact != null) 'emergencyContact': emergencyContact,
-      'diplomas': diplomas,
-      'yearsOfExperience': yearsOfExperience,
-      'educationCycles': educationCycles,
-      'subjects': subjects,
-      'languages': languages,
-      if (rating != null) 'rating': rating,
-      'isAvailable': isAvailable,
-      'isInspector': isInspector,
-      'createdAt': createdAt,
-      if (teacherSince != null) 'teacherSince': teacherSince,
-      if (lastAvailabilityUpdate != null)
-        'lastAvailabilityUpdate': lastAvailabilityUpdate,
-    };
+  factory TeacherModel.fromMap(Map<String, dynamic> map) {
+    return TeacherModel(
+      id: map['id'],
+      name: map['name'],
+      email: map['email'],
+      role: map['role'],
+      firstName: map['firstName'],
+      lastName: map['lastName'],
+      phoneNumber: map['phoneNumber'],
+      department: map['department'],
+      country: map['country'],
+      secondaryPhone: map['secondaryPhone'],
+      emergencyContact: map['emergencyContact'],
+      diplomas: List<String>.from(map['diplomas'] ?? []),
+      yearsOfExperience: map['yearsOfExperience']?.toInt() ?? 0,
+      profileImageUrl: map['profileImageUrl'],
+      educationCycles: List<String>.from(map['educationCycles']),
+      subjects: List<String>.from(map['subjects']),
+      languages: List<String>.from(map['languages']),
+      rating: map['rating']?.toDouble(),
+      isAvailable: map['isAvailable'],
+      isInspector: map['isInspector'],
+      createdAt: DateTime.parse(map['createdAt']),
+      teacherSince:
+          map['teacherSince'] != null
+              ? DateTime.parse(map['teacherSince'])
+              : null,
+      lastAvailabilityUpdate:
+          map['lastAvailabilityUpdate'] != null
+              ? DateTime.parse(map['lastAvailabilityUpdate'])
+              : null,
+    );
   }
 
-  // Getter pratique
-  String get fullName => '$firstName $lastName';
-  String? get location =>
-      country != null ? '$department, $country' : department;
-
-  // Calcul de l'expérience réelle
-  int get actualExperience {
-    return teacherSince != null
-        ? DateTime.now().difference(teacherSince!).inDays ~/ 365
-        : yearsOfExperience;
-  }
+  Map<String, dynamic> toMap() => {
+    ...super.toJson(),
+    'firstName': firstName,
+    'lastName': lastName,
+    'phoneNumber': phoneNumber,
+    'department': department,
+    'country': country,
+    'secondaryPhone': secondaryPhone,
+    'emergencyContact': emergencyContact,
+    'diplomas': diplomas,
+    'yearsOfExperience': yearsOfExperience,
+    'profileImageUrl': profileImageUrl,
+    'educationCycles': educationCycles,
+    'subjects': subjects,
+    'languages': languages,
+    'rating': rating,
+    'isAvailable': isAvailable,
+    'isInspector': isInspector,
+    'createdAt': createdAt.toIso8601String(),
+    'teacherSince': teacherSince?.toIso8601String(),
+    'lastAvailabilityUpdate': lastAvailabilityUpdate?.toIso8601String(),
+  };
 
   @override
   List<Object?> get props => [
@@ -163,6 +171,7 @@ class TeacherModel extends UserModel {
     emergencyContact,
     diplomas,
     yearsOfExperience,
+    profileImageUrl,
     educationCycles,
     subjects,
     languages,
@@ -173,20 +182,4 @@ class TeacherModel extends UserModel {
     teacherSince,
     lastAvailabilityUpdate,
   ];
-  static UserRole _parseUserRole(String? role) {
-    if (role == null) return UserRole.teacher; // Valeur par défaut
-    return UserRole.values.firstWhere(
-      (e) => e.name == role,
-      orElse: () => UserRole.visitor, // Fallback si valeur inconnue
-    );
-  }
-
-  // Convertit une String en UserPlan (avec fallback)
-  static UserPlan _parseUserPlan(String? plan) {
-    if (plan == null) return UserPlan.free; // Valeur par défaut
-    return UserPlan.values.firstWhere(
-      (e) => e.name == plan,
-      orElse: () => UserPlan.free, // Fallback si valeur inconnue
-    );
-  }
 }
