@@ -13,20 +13,19 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
+        debugPrint('Current Auth State: $state'); // Log d'état
+
         if (state is Authenticated) {
-          // isNewUser a une valeur par défaut `true` dans UserModel.
-          // Le `?? true` est une sécurité supplémentaire si la valeur est null.
+          debugPrint(
+            'User data: ${state.user.toJson()}',
+          ); // Log des données utilisateur
           final isNewUser = state.user.isNewUser ?? true;
 
           if (isNewUser) {
-            // Si l'utilisateur est considéré comme nouveau (n'a pas encore finalisé la sélection de rôle),
-            // on le dirige vers RoleSelectionPage.
-            // RoleSelectionPage est responsable de mettre à jour le rôle et de passer isNewUser à false.
+            debugPrint('Redirecting to RoleSelection (new user)');
             return const RoleSelectionPage();
           } else {
-            // Si l'utilisateur n'est pas nouveau (isNewUser est false),
-            // il a déjà configuré son rôle. Il est donc dirigé vers la HomePage.
-            // Le contenu de HomePage peut ensuite s'adapter en fonction du state.user.role.
+            debugPrint('Redirecting to Home (existing user)');
             return const HomePage();
           }
         } else if (state is AuthLoading) {
@@ -34,6 +33,7 @@ class AuthWrapper extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         } else {
+          debugPrint('Redirecting to Signup (unauthenticated)');
           return const SignupPage();
         }
       },

@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_bloc.dart';
+import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_event.dart';
 import 'package:leloprof/features/job/data/datasources/firebase_joboffer_repos.dart';
 import 'package:leloprof/features/job/presentation/bloc/bloc/joboffer_bloc.dart';
 import 'package:leloprof/features/school/data/datasources/firebase_school_repos.dart';
@@ -36,9 +37,9 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(
           create:
-              (_) => AuthBloc(
-                firebaseAuthRepository,
-              ), // Injection de la dépendance
+              (_) =>
+                  AuthBloc(firebaseAuthRepository)
+                    ..add(AppStarted()), // Injection de la dépendance
         ),
         BlocProvider(
           create:

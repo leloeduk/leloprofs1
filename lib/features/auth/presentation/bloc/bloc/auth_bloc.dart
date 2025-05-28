@@ -18,6 +18,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
     final user = SharedPrefs.getUser();
+
+    print('User from SharedPrefs: ${user?.toJson()}');
     if (user != null) {
       emit(Authenticated(user));
     } else {
@@ -34,6 +36,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final user = await authRepository.signInWithGoogle();
       if (user != null) {
         await SharedPrefs.saveUser(user);
+        print('Saving user: ${user.id}');
         emit(Authenticated(user));
       } else {
         emit(const AuthError("Google Sign-In failed."));

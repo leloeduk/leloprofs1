@@ -1,147 +1,297 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:leloprof/features/job/domain/models/joboffer_model.dart';
 import 'package:leloprof/features/school/domain/models/school_model.dart';
-import '../../../auth/presentation/bloc/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/bloc/auth_state.dart';
 
-class SchoolDetailPage extends StatelessWidget {
+class SchoolDetailPage extends StatefulWidget {
   final SchoolModel school;
+  final String currentUserId;
 
-  const SchoolDetailPage({super.key, required this.school});
+  const SchoolDetailPage({
+    super.key,
+    required this.school,
+    required this.currentUserId,
+  });
 
   @override
+  State<SchoolDetailPage> createState() => _SchoolDetailPageState();
+}
+
+class _SchoolDetailPageState extends State<SchoolDetailPage> {
+  late final JobOfferModel offer;
+  @override
   Widget build(BuildContext context) {
-    final isOwner =
-        context.read<AuthBloc>().state is Authenticated &&
-        (context.read<AuthBloc>().state as Authenticated).user.id == school.id;
+    final theme = Theme.of(context);
+    final color = theme.colorScheme;
+    final bool canEdit = widget.school.id == widget.currentUserId;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(school.name),
-        actions:
-            isOwner
-                ? [
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed:
-                        () => context.push('/edit-school', extra: school),
-                  ),
-                ]
-                : null,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (school.profileImageUrl != null)
-              Center(
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage: NetworkImage(school.profileImageUrl!),
-                ),
-              ),
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                school.name,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildDetailSection(context, [
-              _buildItem("Ville", school.town),
-              _buildItem("Département", school.department),
-              _buildItem("Pays", school.country),
-              _buildItem("Téléphone principal", school.primaryPhone),
-              if (school.secondaryPhone != null)
-                _buildItem("Téléphone secondaire", school.secondaryPhone!),
-              if (school.emergencyPhone != null)
-                _buildItem("Téléphone d'urgence", school.emergencyPhone!),
-              _buildItem("Email", school.email),
-              _buildItem("Année de création", "${school.yearOfEstablishment}"),
-              _buildItem("Source de création", school.creationSource),
-              _buildItem("Statut", school.isActive ? "Actif" : "Inactif"),
-              _buildItem("Vérifié", school.isVerified ? "Oui" : "Non"),
-            ]),
-            const SizedBox(height: 16),
-            _buildTagSection("Types d'école", school.types),
-            _buildTagSection("Cycles éducatifs", school.educationCycle),
-            const SizedBox(height: 24),
-            Text(
-              "À propos de l'école",
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              school.bio ?? "Aucune description disponible.",
-              style: TextStyle(color: Colors.grey[700]),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailSection(BuildContext context, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children:
-          children
-              .map(
-                (child) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: child,
-                ),
-              )
-              .toList(),
-    );
-  }
-
-  Widget _buildItem(String title, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(height: 2),
-        Text(value),
-        const Divider(),
-      ],
-    );
-  }
-
-  Widget _buildTagSection(String label, List<String> tags) {
-    if (tags.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 8,
-          runSpacing: 6,
-          children:
-              tags
-                  .map(
-                    (tag) => Chip(
-                      label: Text(tag),
-                      backgroundColor: Colors.blue.shade50,
-                      labelStyle: const TextStyle(color: Colors.blue),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 220,
+            backgroundColor: color.primary,
+            foregroundColor: color.onPrimary,
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  widget.school.profileImageUrl != null
+                      ? Image.network(
+                        widget.school.profileImageUrl!,
+                        fit: BoxFit.cover,
+                      )
+                      : Container(color: color.primary),
+                  Container(color: Colors.black.withOpacity(0.3)),
+                  Positioned(
+                    bottom: 16,
+                    left: 16,
+                    child: Text(
+                      widget.school.name,
+                      style: theme.textTheme.headlineSmall!.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  )
-                  .toList(),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              if (canEdit)
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed:
+                      () => context.pushNamed(
+                        'edit-school',
+                        extra: widget.school,
+                      ),
+                ),
+            ],
+          ),
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 48,
+                    backgroundColor: color.secondary,
+                    backgroundImage:
+                        widget.school.profileImageUrl != null
+                            ? NetworkImage(widget.school.profileImageUrl!)
+                            : null,
+                    child:
+                        widget.school.profileImageUrl == null
+                            ? Icon(
+                              Icons.school,
+                              size: 40,
+                              color: color.onSecondary,
+                            )
+                            : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Chip(
+                    backgroundColor:
+                        widget.school.isVerified
+                            ? Colors.green.shade50
+                            : Colors.red.shade50,
+                    label: Text(
+                      widget.school.isVerified
+                          ? '✅ École Vérifiée'
+                          : '❌ Non Vérifiée',
+                      style: TextStyle(
+                        color:
+                            widget.school.isVerified
+                                ? Colors.green
+                                : Colors.red,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 32),
+                  _buildSectionTitle(context, 'Informations Générales'),
+                  _buildInfoItem(
+                    context,
+                    Icons.location_city,
+                    'Ville',
+                    widget.school.town,
+                  ),
+                  _buildInfoItem(
+                    context,
+                    Icons.phone,
+                    'Téléphone',
+                    widget.school.primaryPhone,
+                  ),
+                  if (widget.school.secondaryPhone != null)
+                    _buildInfoItem(
+                      context,
+                      Icons.phone_android,
+                      'Téléphone secondaire',
+                      widget.school.secondaryPhone!,
+                    ),
+                  if (widget.school.country != null)
+                    _buildInfoItem(
+                      context,
+                      Icons.flag,
+                      'Pays',
+                      widget.school.country!,
+                    ),
+                  _buildInfoItem(
+                    context,
+                    Icons.school,
+                    'Département',
+                    widget.school.department,
+                  ),
+                  _buildInfoItem(
+                    context,
+                    Icons.calendar_today,
+                    'Créée en',
+                    '${widget.school.yearOfEstablishment}',
+                  ),
+
+                  const Divider(height: 32),
+                  _buildSectionTitle(context, 'Détails Éducatifs'),
+                  _buildInfoItem(
+                    context,
+                    Icons.book_outlined,
+                    'Cycles éducatifs',
+                    widget.school.educationCycle.join(", "),
+                  ),
+                  _buildInfoItem(
+                    context,
+                    Icons.campaign_outlined,
+                    'Annonces publiées',
+                    widget.school.jobPosts.join(", "),
+                  ),
+                  if (canEdit)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            context.pushNamed('/edit-offer', extra: offer);
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Ajouter une offre'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 40),
+
+                  if (widget.school.bio != null &&
+                      widget.school.bio!.isNotEmpty)
+                    _buildInfoItem(
+                      context,
+                      Icons.description_outlined,
+                      'À propos',
+                      widget.school.bio!,
+                    ),
+
+                  const Divider(height: 32),
+                  _buildSectionTitle(context, 'Statut'),
+                  _buildInfoItem(
+                    context,
+                    Icons.verified_user_outlined,
+                    'Statut',
+                    widget.school.isActive ? 'Actif' : 'Inactif',
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleLarge!.copyWith(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.primary,
         ),
-        const SizedBox(height: 16),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String value,
+  ) {
+    final color = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+      decoration: BoxDecoration(
+        color: color.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 26, color: color.primary),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: color.tertiary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(value, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

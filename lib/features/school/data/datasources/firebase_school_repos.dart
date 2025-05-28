@@ -9,25 +9,16 @@ class FirebaseSchoolRepos implements SchoolRepository {
 
   @override
   Future<List<SchoolModel>> getSchools() async {
-    final current = FirebaseAuth.instance.currentUser;
-    if (current == null) throw Exception('Non authentifié');
-
-    final snapshot =
-        await firestore
-            .collection('schools')
-            // .where('uid', isEqualTo: current.uid) // Notez la minuscule
-            .get();
-
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      data['id'] = doc.id; // Assurez-vous d'inclure l'ID du document
-      return SchoolModel.fromJson(data);
-    }).toList();
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final snapshot = await firestore.collection("schools").get();
+    return snapshot.docs
+        .map((doc) => SchoolModel.fromJson(doc.data()))
+        .toList();
   }
 
   @override
   Future<void> createSchool(SchoolModel school) async {
-    await firestore.collection('schools').add(school.toMap());
+    await firestore.collection('schools').doc(school.id).set(school.toMap());
   }
 
   @override

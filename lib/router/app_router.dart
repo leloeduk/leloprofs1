@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:leloprof/features/auth/presentation/pages/role_selection_page.dart';
 import 'package:leloprof/features/auth/domain/entities/user_model.dart'; // Ajout pour UserModel
 import 'package:leloprof/features/job/domain/models/joboffer_model.dart';
@@ -55,31 +58,25 @@ final GoRouter appRouter = GoRouter(
     ),
 
     GoRoute(
-      path: '/school-details',
-      name: 'school-details',
-      builder: (context, state) {
-        final school = state.extra as SchoolModel;
-        return SchoolDetailPage(school: school);
-      },
-    ),
-    GoRoute(
-      path: '/edit-school',
-      name: 'edit-school',
-      builder: (context, state) {
-        final school = state.extra as SchoolModel;
-        return EditSchoolPage(school: school); // À implémenter
-      },
-    ),
-    // Dans votre fichier de routes
-    GoRoute(
       path: '/teacher/:id',
       name: 'teacher-details',
       builder: (context, state) {
         final teacher = state.extra as TeacherModel;
-        final id = state.pathParameters['id']!;
-        return TeacherDetailPage(teacher: teacher, teacherId: id);
+        // Récupère l'ID de l'utilisateur connecté depuis ton service d'authentification
+        final currentUserId =
+            context
+                .read<AuthBloc>()
+                .authRepository
+                .getCurrentUser()!
+                .id; // adapte selon ton code
+
+        return TeacherDetailPage(
+          currentUserId: currentUserId,
+          teacher: teacher,
+        );
       },
     ),
+
     GoRoute(
       path: '/edit-teacher',
       name: 'edit-teacher',
@@ -95,6 +92,32 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final user = state.extra as UserModel;
         return TeacherSetupPage(initialUser: user);
+      },
+    ),
+
+    // school pages *
+    GoRoute(
+      path: '/school/:id',
+      name: 'school-details',
+      builder: (context, state) {
+        final school = state.extra as SchoolModel;
+        // Récupère l'ID de l'utilisateur connecté depuis ton service d'authentification
+        final currentUserId =
+            context
+                .read<AuthBloc>()
+                .authRepository
+                .getCurrentUser()!
+                .id; // adapte selon ton code
+
+        return SchoolDetailPage(currentUserId: currentUserId, school: school);
+      },
+    ),
+    GoRoute(
+      path: '/edit-school',
+      name: 'edit-school',
+      builder: (context, state) {
+        final school = state.extra as SchoolModel;
+        return EditSchoolPage(school: school); // À implémenter
       },
     ),
     GoRoute(

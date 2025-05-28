@@ -169,11 +169,15 @@ class DrawerPage extends StatelessWidget {
     );
   }
 
-  void _logout(BuildContext context) {
+  void _logout(BuildContext context) async {
     Navigator.pop(context); // Fermer le drawer d'abord
+    // Émettre l'événement de déconnexion
     context.read<AuthBloc>().add(SignOutRequested());
-    // AuthWrapper s'occupera de la redirection vers la page de connexion
-    // Assurez-vous que votre GoRouter est configuré pour que '/' soit AuthWrapper
+
+    // Attendre un court instant pour permettre au BLoC de traiter l'événement
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Naviguer vers la page d'accueil avec remplacement pour éviter de revenir en arrière
     context.go('/');
   }
 }

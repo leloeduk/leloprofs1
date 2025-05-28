@@ -1,125 +1,257 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../auth/domain/entities/user_model.dart';
 import 'package:leloprof/features/teacher/domain/models/teacher_model.dart';
-
-import '../../../auth/presentation/bloc/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/bloc/auth_state.dart';
 
 class TeacherDetailPage extends StatelessWidget {
   final TeacherModel teacher;
+  final String currentUserId;
 
   const TeacherDetailPage({
     super.key,
     required this.teacher,
-    required String teacherId,
-    // L'argument teacherId n'est pas utilisé, tu peux le supprimer si inutile.
+    required this.currentUserId,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isOwner =
-        context.read<AuthBloc>().state is Authenticated &&
-        (context.read<AuthBloc>().state as Authenticated).user.id == teacher.id;
+    final bool canEdit = teacher.id == currentUserId;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${teacher.firstName} ${teacher.lastName}'),
-        actions: [
-          if (isOwner)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () => context.push('/edit-teacher', extra: teacher),
-              tooltip: 'Modifier ce profil',
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 220,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  teacher.profileImageUrl != null
+                      ? Image.network(
+                        teacher.profileImageUrl!,
+                        fit: BoxFit.cover,
+                      )
+                      : Container(color: Colors.grey.shade800),
+                  Container(color: Colors.black.withOpacity(0.3)),
+                ],
+              ),
             ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 60,
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.primary.withOpacity(0.2),
-              child: Text(
-                '${teacher.firstName[0]}${teacher.lastName[0]}',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
+            actions: [
+              if (canEdit)
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed:
+                      () => context.pushNamed('edit-teacher', extra: teacher),
+                ),
+            ],
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundImage:
+                        teacher.profileImageUrl != null
+                            ? NetworkImage(teacher.profileImageUrl!)
+                            : null,
+                    child:
+                        teacher.profileImageUrl == null
+                            ? Icon(Icons.person, size: 60, color: Colors.white)
+                            : null,
+                    backgroundColor: Colors.red.shade600,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '${teacher.firstName} ${teacher.lastName}',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          teacher.isAvailable
+                              ? Colors.green.shade100
+                              : Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      teacher.isAvailable ? "✅ Disponible" : "❌ Non disponible",
+                      style: TextStyle(
+                        color:
+                            teacher.isAvailable
+                                ? Colors.green.shade800
+                                : Colors.red.shade800,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Container(
+              width: double.infinity,
+              height: 180,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Center(
+                child: Text(
+                  "Présentation ou contenu à ajouter ici",
+                  style: TextStyle(fontStyle: FontStyle.italic),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              '${teacher.firstName} ${teacher.lastName}',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              teacher.email ?? 'Email non renseigné',
-              style: TextStyle(color: Colors.grey[700]),
-            ),
-            const SizedBox(height: 24),
-            _buildDetailItem(context, 'Département', teacher.department),
-            _buildDetailItem(context, 'Téléphone', teacher.phoneNumber),
-            _buildDetailItem(
-              context,
-              'Spécialité',
-              teacher.educationCycles.isNotEmpty
-                  ? teacher.educationCycles.first
-                  : 'Non précisé',
-            ),
-            _buildDetailItem(
-              context,
-              'Années d\'expérience',
-              teacher.yearsOfExperience.toString(),
-            ),
-            const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Bio',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  _buildInfoSection(
+                    context,
+                    Icons.school,
+                    'Département',
+                    teacher.department,
+                  ),
+                  _buildInfoSection(
+                    context,
+                    Icons.phone,
+                    'Téléphone',
+                    teacher.phoneNumber,
+                  ),
+                  if (teacher.secondaryPhone != null)
+                    _buildInfoSection(
+                      context,
+                      Icons.phone_android,
+                      'Autre téléphone',
+                      teacher.secondaryPhone!,
+                    ),
+                  if (teacher.country != null)
+                    _buildInfoSection(
+                      context,
+                      Icons.flag,
+                      'Pays',
+                      teacher.country!,
+                    ),
+                  _buildInfoSection(
+                    context,
+                    Icons.workspace_premium,
+                    'Diplômes',
+                    teacher.diplomas.join(", "),
+                  ),
+                  _buildInfoSection(
+                    context,
+                    Icons.timeline,
+                    'Expérience',
+                    '${teacher.yearsOfExperience} ans',
+                  ),
+                  _buildInfoSection(
+                    context,
+                    Icons.book,
+                    'Matières',
+                    teacher.subjects.join(", "),
+                  ),
+                  _buildInfoSection(
+                    context,
+                    Icons.language,
+                    'Langues',
+                    teacher.languages.join(", "),
+                  ),
+                  _buildInfoSection(
+                    context,
+                    Icons.school_outlined,
+                    'Cycles éducatifs',
+                    teacher.educationCycles.join(", "),
+                  ),
+                  _buildInfoSection(
+                    context,
+                    Icons.verified,
+                    'Inspecteur',
+                    teacher.isInspector ? "Oui" : "Non",
+                  ),
+                  if (teacher.teacherSince != null)
+                    _buildInfoSection(
+                      context,
+                      Icons.date_range,
+                      'Enseigne depuis',
+                      '${teacher.teacherSince!.year}',
+                    ),
+                  if (teacher.rating != null)
+                    _buildInfoSection(
+                      context,
+                      Icons.star,
+                      'Note',
+                      '${teacher.rating!.toStringAsFixed(1)} / 5',
+                    ),
+                  const SizedBox(height: 30),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              teacher.secondaryPhone ?? 'Aucune biographie disponible.',
-              style: TextStyle(fontSize: 16, color: Colors.grey[800]),
-              textAlign: TextAlign.justify,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDetailItem(BuildContext context, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 130,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+  Widget _buildInfoSection(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String value,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      color: colorScheme.onPrimary,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      elevation: 1.5,
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 28, color: colorScheme.primary),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.tertiary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
-        ],
+          ],
+        ),
       ),
     );
   }

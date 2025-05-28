@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../auth/presentation/bloc/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/bloc/auth_state.dart';
 import '../bloc/bloc/school_bloc.dart';
 import '../bloc/bloc/school_event.dart';
 import '../bloc/bloc/school_state.dart';
@@ -19,7 +17,9 @@ class _SchoolPageState extends State<SchoolPage> {
   @override
   void initState() {
     super.initState();
-    context.read<SchoolBloc>().add(LoadSchools());
+    if (context.read<SchoolBloc>().state is! SchoolLoaded) {
+      context.read<SchoolBloc>().add(LoadSchools());
+    }
   }
 
   @override
@@ -33,20 +33,20 @@ class _SchoolPageState extends State<SchoolPage> {
         elevation: 0,
       ),
       body: BlocConsumer<SchoolBloc, SchoolState>(
-        listener: (context, state) {
-          if (state is SchoolError) {
+        listener: (context, stateSchool) {
+          if (stateSchool is SchoolError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Erreur : ${state.message}")),
+              SnackBar(content: Text("Erreur : ${stateSchool.message}")),
             );
           }
         },
-        builder: (context, state) {
-          if (state is SchoolLoading) {
+        builder: (context, stateSchool) {
+          if (stateSchool is SchoolLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (state is SchoolLoaded) {
-            final schools = state.schools;
+          if (stateSchool is SchoolLoaded) {
+            final schools = stateSchool.schools;
 
             if (schools.isEmpty) {
               return const Center(
@@ -57,84 +57,131 @@ class _SchoolPageState extends State<SchoolPage> {
               );
             }
 
-            final authState = context.read<AuthBloc>().state;
-            final currentUserId =
-                authState is Authenticated ? authState.user.id : null;
-
             return ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: schools.length,
               itemBuilder: (context, index) {
                 final school = schools[index];
-                final canEdit =
-                    widget.role == 'ecole' && school.id == currentUserId;
 
-                return Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 4,
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(12),
-                    leading: const CircleAvatar(
-                      radius: 26,
-                      backgroundColor: Colors.redAccent,
-                      child: Icon(Icons.school, color: Colors.white, size: 28),
+                return GestureDetector(
+                  onTap:
+                      () => context.push('/school/${school.id}', extra: school),
+                  child: Card(
+                    color: Theme.of(context).colorScheme.tertiary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    title: Text(
-                      school.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    elevation: 2,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 25,
+                            backgroundImage:
+                                school.profileImageUrl != null
+                                    ? NetworkImage(school.profileImageUrl!)
+                                    : null,
+                            child:
+                                school.profileImageUrl == null
+                                    ? const Icon(Icons.school, size: 30)
+                                    : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        school.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Text(
+                                      school.isVerified
+                                          ? "✅Verifiée"
+                                          : "❌NonVerifiée",
+                                      style: TextStyle(
+                                        color:
+                                            school.isVerified
+                                                ? Colors.green.shade900
+                                                : Colors.red.shade900,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    if (school.types.isNotEmpty)
+                                      Expanded(
+                                        child: _buildInfo(
+                                          Icons.workspace_premium,
+                                          school.types.last,
+                                        ),
+                                      ),
+                                    if (school.educationCycle.isNotEmpty)
+                                      Expanded(
+                                        child: _buildInfo(
+                                          Icons.flag,
+                                          school.educationCycle.last,
+                                        ),
+                                      ),
+                                    Expanded(
+                                      child: _buildInfo(
+                                        Icons.location_on,
+                                        school.town,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        Text(school.town),
-                        const SizedBox(height: 2),
-                        Text(
-                          school.email,
-                          style: TextStyle(
-                            color: Colors.grey[700],
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                    trailing:
-                        canEdit
-                            ? IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.blueAccent,
-                              ),
-                              onPressed:
-                                  () => context.push(
-                                    '/edit-school',
-                                    extra: school,
-                                  ),
-                            )
-                            : null,
-                    onTap: () => context.push('/school-details', extra: school),
                   ),
                 );
               },
             );
           }
 
-          if (state is SchoolError) {
-            return Center(child: Text('Erreur : ${state.message}'));
+          if (stateSchool is SchoolError) {
+            return Center(child: Text('Erreur : ${stateSchool.message}'));
           }
 
           return const Center(child: CircularProgressIndicator());
         },
       ),
+    );
+  }
+
+  Widget _buildInfo(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.red),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            text,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-
-import '../../domain/models/teacher_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:leloprof/features/teacher/domain/models/teacher_model.dart';
+import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_bloc.dart';
 
 class TeacherEditPage extends StatefulWidget {
   final TeacherModel teacher;
 
-  const TeacherEditPage({super.key, required this.teacher});
+  const TeacherEditPage({required this.teacher, super.key});
 
   @override
-  State<TeacherEditPage> createState() => _EditTeacherPageState();
+  State<TeacherEditPage> createState() => _TeacherEditPageState();
 }
 
-class _EditTeacherPageState extends State<TeacherEditPage> {
+class _TeacherEditPageState extends State<TeacherEditPage> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _firstNameController;
@@ -23,47 +24,60 @@ class _EditTeacherPageState extends State<TeacherEditPage> {
   late TextEditingController _countryController;
   late TextEditingController _yearsOfExperienceController;
 
-  List<String> _diplomas = [];
-  List<String> _educationCycles = [];
-  List<String> _subjects = [];
-  List<String> _languages = [];
+  late List<String> _diplomas;
+  late List<String> _educationCycles;
+  late List<String> _subjects;
+  late List<String> _languages;
 
-  bool _isAvailable = true;
+  bool _isAvailable = false;
   bool _isInspector = false;
 
-  late DateTime _dateOfBirth;
-  late DateTime _dateOfRecruitment;
+  DateTime? _dateOfBirth;
+  DateTime? _dateOfRecruitment;
+
+  // Couleurs personnalisées (palette harmonieuse)
+  final Color primaryColor = Color(0xFF005CAF); // bleu foncé
+  final Color accentColor = Color(0xFFE95F29); // orange chaud
+  final Color backgroundColor = Color(0xFFF7F9FC); // gris très clair
+  final Color cardColor = Colors.white;
+  final Color chipColor = Color(0xFFB3D4FC); // bleu clair pour chips
+  final Color chipTextColor = Color(0xFF003366);
 
   @override
   void initState() {
     super.initState();
-    final t = widget.teacher;
-
-    _firstNameController = TextEditingController(text: t.firstName);
-    _lastNameController = TextEditingController(text: t.lastName);
-    _phoneNumberController = TextEditingController(text: t.phoneNumber);
+    _firstNameController = TextEditingController(
+      text: widget.teacher.firstName,
+    );
+    _lastNameController = TextEditingController(text: widget.teacher.lastName);
+    _phoneNumberController = TextEditingController(
+      text: widget.teacher.phoneNumber,
+    );
     _secondaryPhoneController = TextEditingController(
-      text: t.secondaryPhone ?? '',
+      text: widget.teacher.secondaryPhone ?? '',
     );
     _emergencyContactController = TextEditingController(
-      text: t.emergencyContact ?? '',
+      text: widget.teacher.emergencyContact ?? '',
     );
-    _departmentController = TextEditingController(text: t.department);
-    _countryController = TextEditingController(text: t.country);
+    _departmentController = TextEditingController(
+      text: widget.teacher.department,
+    );
+    _countryController = TextEditingController(
+      text: widget.teacher.country ?? '',
+    );
     _yearsOfExperienceController = TextEditingController(
-      text: t.yearsOfExperience.toString(),
+      text: widget.teacher.yearsOfExperience.toString(),
     );
 
-    _diplomas = List.from(t.diplomas);
-    _educationCycles = List.from(t.educationCycles);
-    _subjects = List.from(t.subjects);
-    _languages = List.from(t.languages);
+    _diplomas = List<String>.from(widget.teacher.diplomas);
+    _educationCycles = List<String>.from(widget.teacher.educationCycles);
+    _subjects = List<String>.from(widget.teacher.subjects);
+    _languages = List<String>.from(widget.teacher.languages);
 
-    _isAvailable = t.isAvailable;
-    _isInspector = t.isInspector;
-
-    _dateOfBirth = DateTime(1990, 1, 1);
-    _dateOfRecruitment = DateTime.now();
+    _isAvailable = widget.teacher.isAvailable;
+    _isInspector = widget.teacher.isInspector;
+    // _dateOfBirth = widget.teacher.dateOfBirth;
+    // _dateOfRecruitment = widget.teacher.dateOfRecruitment;
   }
 
   @override
@@ -79,12 +93,355 @@ class _EditTeacherPageState extends State<TeacherEditPage> {
     super.dispose();
   }
 
-  void _save() {
-    if (!_formKey.currentState!.validate()) return;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        title: Text(
+          'Modifier Enseignant',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: primaryColor,
+        elevation: 2,
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+        child: Card(
+          color: cardColor,
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Informations personnelles'),
+                  _buildTextField(
+                    _firstNameController,
+                    'Prénom',
+                    icon: Icons.person,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildTextField(
+                    _lastNameController,
+                    'Nom',
+                    icon: Icons.person_outline,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildTextField(
+                    _phoneNumberController,
+                    'Téléphone principal',
+                    keyboardType: TextInputType.phone,
+                    icon: Icons.phone,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildTextField(
+                    _secondaryPhoneController,
+                    'Téléphone secondaire (facultatif)',
+                    keyboardType: TextInputType.phone,
+                    icon: Icons.phone_android,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildTextField(
+                    _emergencyContactController,
+                    'Contact urgence (facultatif)',
+                    keyboardType: TextInputType.phone,
+                    icon: Icons.contact_phone,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildTextField(
+                    _departmentController,
+                    'Département',
+                    icon: Icons.location_city,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildTextField(
+                    _countryController,
+                    'Pays (facultatif)',
+                    icon: Icons.public,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildTextField(
+                    _yearsOfExperienceController,
+                    'Années d\'expérience',
+                    keyboardType: TextInputType.number,
+                    icon: Icons.timeline,
+                  ),
+                  const SizedBox(height: 25),
 
-    final updatedTeacher = TeacherModel(
-      id: widget.teacher.id,
-      email: widget.teacher.email,
+                  _buildSectionTitle('Diplômes'),
+                  _buildEditableChipsList(_diplomas),
+                  const SizedBox(height: 25),
+
+                  _buildSectionTitle('Cycles éducatifs'),
+                  _buildEditableChipsList(_educationCycles),
+                  const SizedBox(height: 25),
+
+                  _buildSectionTitle('Matières'),
+                  _buildEditableChipsList(_subjects),
+                  const SizedBox(height: 25),
+
+                  _buildSectionTitle('Langues'),
+                  _buildEditableChipsList(_languages),
+                  const SizedBox(height: 25),
+
+                  _buildSectionTitle('Disponibilités & Rôles'),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CheckboxListTile(
+                          title: Text('Disponible'),
+                          value: _isAvailable,
+                          activeColor: accentColor,
+                          onChanged:
+                              (val) =>
+                                  setState(() => _isAvailable = val ?? false),
+                          controlAffinity: ListTileControlAffinity.leading,
+                        ),
+                      ),
+                      Expanded(
+                        child: CheckboxListTile(
+                          title: Text('Inspecteur'),
+                          value: _isInspector,
+                          activeColor: accentColor,
+                          onChanged:
+                              (val) =>
+                                  setState(() => _isInspector = val ?? false),
+                          controlAffinity: ListTileControlAffinity.leading,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 25),
+                  _buildDatePicker('Date de naissance', _dateOfBirth, (date) {
+                    setState(() => _dateOfBirth = date);
+                  }),
+                  const SizedBox(height: 15),
+                  _buildDatePicker('Date de recrutement', _dateOfRecruitment, (
+                    date,
+                  ) {
+                    setState(() => _dateOfRecruitment = date);
+                  }),
+
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        'Enregistrer',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: primaryColor,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label, {
+    TextInputType keyboardType = TextInputType.text,
+    IconData? icon,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      validator: (val) {
+        if (val == null || val.trim().isEmpty) return 'Ce champ est requis';
+        if (keyboardType == TextInputType.number &&
+            int.tryParse(val.trim()) == null)
+          return 'Veuillez entrer un nombre valide';
+        return null;
+      },
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: icon != null ? Icon(icon, color: primaryColor) : null,
+        filled: true,
+        fillColor: backgroundColor,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditableChipsList(List<String> list) {
+    final controller = TextEditingController();
+
+    return StatefulBuilder(
+      builder:
+          (ctx, setDialogState) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (list.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Text(
+                    'Aucun élément. Ajoutez-en un.',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children:
+                    list
+                        .map(
+                          (e) => Chip(
+                            label: Text(
+                              e,
+                              style: TextStyle(color: chipTextColor),
+                            ),
+                            backgroundColor: chipColor,
+                            deleteIconColor: accentColor,
+                            onDeleted: () {
+                              setDialogState(() => list.remove(e));
+                            },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        )
+                        .toList(),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        labelText: 'Ajouter un élément',
+                        filled: true,
+                        fillColor: backgroundColor,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: primaryColor, width: 2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                    ),
+                    onPressed: () {
+                      final val = controller.text.trim();
+                      if (val.isNotEmpty && !list.contains(val)) {
+                        setDialogState(() {
+                          list.add(val);
+                          controller.clear();
+                        });
+                      }
+                    },
+                    child: Icon(Icons.add, color: Colors.white),
+                  ),
+                ],
+              ),
+            ],
+          ),
+    );
+  }
+
+  Widget _buildDatePicker(
+    String label,
+    DateTime? date,
+    ValueChanged<DateTime> onDateSelected,
+  ) {
+    return InkWell(
+      onTap: () async {
+        final now = DateTime.now();
+        final initialDate = date ?? DateTime(now.year - 30);
+        final pickedDate = await showDatePicker(
+          context: context,
+          initialDate: initialDate,
+          firstDate: DateTime(1900),
+          lastDate: now,
+        );
+        if (pickedDate != null) {
+          onDateSelected(pickedDate);
+        }
+      },
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          filled: true,
+          fillColor: backgroundColor,
+          prefixIcon: Icon(Icons.calendar_today, color: primaryColor),
+        ),
+        child: Text(
+          date == null
+              ? 'Sélectionner une date'
+              : '${date.day}/${date.month}/${date.year}',
+          style: TextStyle(
+            fontSize: 16,
+            color: date == null ? Colors.grey[600] : Colors.black87,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _save() {
+    if (_formKey.currentState?.validate() != true) return;
+
+    final updatedTeacher = widget.teacher.copyWith(
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
       phoneNumber: _phoneNumberController.text.trim(),
@@ -97,221 +454,23 @@ class _EditTeacherPageState extends State<TeacherEditPage> {
               ? null
               : _emergencyContactController.text.trim(),
       department: _departmentController.text.trim(),
-      country: _countryController.text.trim(),
-      diplomas: _diplomas,
+      country:
+          _countryController.text.trim().isEmpty
+              ? null
+              : _countryController.text.trim(),
       yearsOfExperience: int.parse(_yearsOfExperienceController.text.trim()),
-      educationCycles: _educationCycles,
-      subjects: _subjects,
-      languages: _languages,
+      diplomas: List<String>.from(_diplomas),
+      educationCycles: List<String>.from(_educationCycles),
+      subjects: List<String>.from(_subjects),
+      languages: List<String>.from(_languages),
       isAvailable: _isAvailable,
       isInspector: _isInspector,
       // dateOfBirth: _dateOfBirth,
       // dateOfRecruitment: _dateOfRecruitment,
-      createdAt: widget.teacher.createdAt,
-      name: widget.teacher.name,
-      role: widget.teacher.role,
-      // profileImage: widget.teacher.profileImage,
-      // ratings: widget.teacher.ratings,
     );
 
-    // TODO : Mettre à jour la base de données Firestore ici avec updatedTeacher
+    context.read<TeacherBloc>().teacherRepository.updateTeacher(updatedTeacher);
 
-    Navigator.of(context).pop(updatedTeacher);
-  }
-
-  Future<void> _editList(String title, List<String> list) async {
-    final TextEditingController itemController = TextEditingController();
-    await showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text('Modifier $title'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (var item in list)
-                  ListTile(
-                    title: Text(item),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          list.remove(item);
-                        });
-                        Navigator.of(context).pop();
-                        _editList(title, list);
-                      },
-                    ),
-                  ),
-                TextField(
-                  controller: itemController,
-                  decoration: InputDecoration(labelText: 'Ajouter un élément'),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  if (itemController.text.trim().isNotEmpty) {
-                    setState(() {
-                      list.add(itemController.text.trim());
-                    });
-                  }
-                  Navigator.of(context).pop();
-                },
-                child: Text('Ajouter'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text('Fermer'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  Future<void> _pickDate(
-    BuildContext context,
-    DateTime initialDate,
-    Function(DateTime) onDatePicked,
-  ) async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (date != null) onDatePicked(date);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Modifier Enseignant'),
-        actions: [IconButton(icon: Icon(Icons.save), onPressed: _save)],
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // TextFields
-              TextFormField(
-                controller: _firstNameController,
-                decoration: InputDecoration(labelText: 'Prénom'),
-                validator:
-                    (v) => v == null || v.isEmpty ? 'Champ obligatoire' : null,
-              ),
-              TextFormField(
-                controller: _lastNameController,
-                decoration: InputDecoration(labelText: 'Nom'),
-                validator:
-                    (v) => v == null || v.isEmpty ? 'Champ obligatoire' : null,
-              ),
-              TextFormField(
-                controller: _phoneNumberController,
-                decoration: InputDecoration(labelText: 'Téléphone principal'),
-                keyboardType: TextInputType.phone,
-                validator:
-                    (v) => v == null || v.isEmpty ? 'Champ obligatoire' : null,
-              ),
-              TextFormField(
-                controller: _secondaryPhoneController,
-                decoration: InputDecoration(labelText: 'Téléphone secondaire'),
-                keyboardType: TextInputType.phone,
-              ),
-              TextFormField(
-                controller: _emergencyContactController,
-                decoration: InputDecoration(labelText: 'Contact d\'urgence'),
-                keyboardType: TextInputType.phone,
-              ),
-              TextFormField(
-                controller: _departmentController,
-                decoration: InputDecoration(labelText: 'Département'),
-                validator:
-                    (v) => v == null || v.isEmpty ? 'Champ obligatoire' : null,
-              ),
-              TextFormField(
-                controller: _countryController,
-                decoration: InputDecoration(labelText: 'Pays'),
-              ),
-              TextFormField(
-                controller: _yearsOfExperienceController,
-                decoration: InputDecoration(labelText: 'Années d\'expérience'),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Champ obligatoire';
-                  if (int.tryParse(v) == null) return 'Doit être un nombre';
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // Dates
-              ListTile(
-                title: Text(
-                  'Date de naissance : ${_dateOfBirth.toLocal().toString().split(' ')[0]}',
-                ),
-                trailing: Icon(Icons.calendar_today),
-                onTap:
-                    () => _pickDate(context, _dateOfBirth, (date) {
-                      setState(() => _dateOfBirth = date);
-                    }),
-              ),
-              ListTile(
-                title: Text(
-                  'Date de recrutement : ${_dateOfRecruitment.toLocal().toString().split(' ')[0]}',
-                ),
-                trailing: Icon(Icons.calendar_today),
-                onTap:
-                    () => _pickDate(context, _dateOfRecruitment, (date) {
-                      setState(() => _dateOfRecruitment = date);
-                    }),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Switches
-              SwitchListTile(
-                title: Text('Disponible'),
-                value: _isAvailable,
-                onChanged: (v) => setState(() => _isAvailable = v),
-              ),
-              SwitchListTile(
-                title: Text('Inspecteur'),
-                value: _isInspector,
-                onChanged: (v) => setState(() => _isInspector = v),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Listes
-              ElevatedButton(
-                onPressed: () => _editList('Diplômes', _diplomas),
-                child: Text('Modifier Diplômes (${_diplomas.length})'),
-              ),
-              ElevatedButton(
-                onPressed:
-                    () => _editList('Cycles d\'éducation', _educationCycles),
-                child: Text(
-                  'Modifier Cycles d\'éducation (${_educationCycles.length})',
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () => _editList('Matières', _subjects),
-                child: Text('Modifier Matières (${_subjects.length})'),
-              ),
-              ElevatedButton(
-                onPressed: () => _editList('Langues', _languages),
-                child: Text('Modifier Langues (${_languages.length})'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    Navigator.pop(context);
   }
 }

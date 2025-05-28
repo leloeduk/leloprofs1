@@ -10,7 +10,7 @@ class FirebaseTeacherRepos implements TeacherRepository {
 
   @override
   Future<List<TeacherModel>> fetchAllTeachers() async {
-    final current = FirebaseAuth.instance.currentUser!;
+    // final current = FirebaseAuth.instance.currentUser!;
     final snapshot = await _teachersRef.get();
     return snapshot.docs
         .map((doc) => TeacherModel.fromMap(doc.data() as Map<String, dynamic>))

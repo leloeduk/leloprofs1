@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:leloprof/features/school/domain/models/school_model.dart';
 import '../../../domain/repositories/school_repository.dart';
 import 'school_event.dart';
 import 'school_state.dart';
@@ -55,7 +56,8 @@ class SchoolBloc extends Bloc<SchoolEvent, SchoolState> {
   ) async {
     try {
       await schoolRepository.createSchool(event.school);
-      add(LoadSchools());
+      final schools = schoolRepository.getSchools();
+      emit(SchoolLoaded(schools as List<SchoolModel>));
     } catch (e) {
       emit(SchoolError("Erreur lors de la création de l'école"));
     }
