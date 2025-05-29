@@ -20,62 +20,76 @@ class _JobofferPageState extends State<JobofferPage> {
   @override
   void initState() {
     super.initState();
-    // Tu peux déclencher le chargement ici si nécessaire :
-    // context.read<JobOfferBloc>().add(LoadJobOffers());
+
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      final user = authState.user;
+
+      // Si l'utilisateur est une école, on charge les offres de cette école
+      if (user.role == 'ecole') {
+        context.read<JobOfferBloc>().add(
+          LoadJobOffers(user.id, schoolUid: user.id),
+        );
+      } else {
+        // Sinon, charge toutes les offres sans filtre
+        context.read<JobOfferBloc>().add(
+          LoadJobOffers('all', schoolUid: 'public'),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<JobOfferBloc, JobOfferState>(
-      builder: (context, state) {
-        if (state is JobOffersLoaded) {
-          final offers = state.offers;
+    return Scaffold(
+      appBar: AppBar(title: const Text("Offres d'emploi")),
+      body: BlocBuilder<JobOfferBloc, JobOfferState>(
+        builder: (context, state) {
+          if (state is JobOffersLoaded) {
+            final offers = state.offers;
 
-          if (offers.isEmpty) {
-            return const Scaffold(
-              body: Center(child: Text("Aucune donnée disponible")),
+            if (offers.isEmpty) {
+              return const Center(child: Text("Aucune offre disponible"));
+            }
+
+            return ListView.builder(
+              itemCount: offers.length,
+              itemBuilder: (context, index) {
+                final offer = offers[index];
+
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 16,
+                  ),
+                  elevation: 2,
+                  child: ListTile(
+                    title: Text(
+                      offer.title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    subtitle: Text(
+                      offer.description.length > 50
+                          ? '${offer.description.substring(0, 50)}...'
+                          : offer.description,
+                    ),
+                    leading: const Icon(Icons.work, size: 32),
+                    onTap: () => context.push('/offer-details', extra: offer),
+                  ),
+                );
+              },
             );
+          } else if (state is JobOfferError) {
+            return Center(child: Text('Erreur: ${state.message}'));
           }
 
-          return ListView.builder(
-            itemCount: offers.length,
-            itemBuilder: (context, index) {
-              final offer = offers[index];
-
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                elevation: 2,
-                child: ListTile(
-                  title: Text(
-                    offer.title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      Text(
-                        offer.description.length > 50
-                            ? '${offer.description.substring(0, 50)}...'
-                            : offer.description,
-                      ),
-                    ],
-                  ),
-                  leading: const Icon(Icons.work, size: 32),
-                  onTap: () => context.push('/offer-details', extra: offer),
-                ),
-              );
-            },
-          );
-        } else if (state is JobOfferError) {
-          return Center(child: Text('Erreur: ${state.message}'));
-        }
-
-        return const Center(child: CircularProgressIndicator());
-      },
+          // Chargement initial
+          return const Center(child: CircularProgressIndicator());
+        },
+      ),
     );
   }
 }

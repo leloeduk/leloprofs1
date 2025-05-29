@@ -133,10 +133,7 @@ class _EditSchoolPageState extends State<EditSchoolPage> {
                           onDeleted: () {
                             setState(() => list.remove(item));
                             Navigator.pop(context);
-                            _editListDialog(
-                              title,
-                              list,
-                            ); // relancer le dialogue
+                            _editListDialog(title, list);
                           },
                         );
                       }).toList(),
@@ -191,6 +188,7 @@ class _EditSchoolPageState extends State<EditSchoolPage> {
           label: Text('$label (${list.length})'),
           onPressed: onEdit,
         ),
+        const SizedBox(height: 6),
         Wrap(
           spacing: 8,
           children: list.map((e) => Chip(label: Text(e))).toList(),
@@ -213,165 +211,111 @@ class _EditSchoolPageState extends State<EditSchoolPage> {
           key: _formKey,
           child: Column(
             children: [
-              Card(
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      _sectionTitle('Informations Générales'),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(labelText: 'Nom'),
-                        validator:
-                            (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Champ obligatoire'
-                                    : null,
-                      ),
-                      TextFormField(
-                        controller: _townController,
-                        decoration: const InputDecoration(labelText: 'Ville'),
-                        validator:
-                            (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Champ obligatoire'
-                                    : null,
-                      ),
-                      TextFormField(
-                        controller: _departmentController,
-                        decoration: const InputDecoration(
-                          labelText: 'Département',
-                        ),
-                        validator:
-                            (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Champ obligatoire'
-                                    : null,
-                      ),
-                      TextFormField(
-                        controller: _countryController,
-                        decoration: const InputDecoration(labelText: 'Pays'),
-                      ),
-                      TextFormField(
-                        controller: _bioController,
-                        decoration: const InputDecoration(
-                          labelText: 'Biographie',
-                        ),
-                        maxLines: 3,
-                      ),
-                    ],
-                  ),
+              _buildSectionCard('Informations Générales', [
+                _buildTextField(_nameController, 'Nom'),
+                _buildTextField(_townController, 'Ville'),
+                _buildTextField(_departmentController, 'Département'),
+                _buildTextField(_countryController, 'Pays'),
+                _buildTextField(_bioController, 'Biographie', maxLines: 3),
+              ]),
+              _buildSectionCard('Téléphones', [
+                _buildTextField(
+                  _primaryPhoneController,
+                  'Téléphone principal',
+                  validatorRequired: true,
+                  keyboardType: TextInputType.phone,
                 ),
-              ),
-              const SizedBox(height: 10),
-              Card(
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      _sectionTitle('Téléphones'),
-                      TextFormField(
-                        controller: _primaryPhoneController,
-                        decoration: const InputDecoration(
-                          labelText: 'Téléphone principal',
-                        ),
-                        validator:
-                            (v) =>
-                                v == null || v.isEmpty
-                                    ? 'Champ obligatoire'
-                                    : null,
-                        keyboardType: TextInputType.phone,
-                      ),
-                      TextFormField(
-                        controller: _secondaryPhoneController,
-                        decoration: const InputDecoration(
-                          labelText: 'Téléphone secondaire',
-                        ),
-                        keyboardType: TextInputType.phone,
-                      ),
-                      TextFormField(
-                        controller: _emergencyPhoneController,
-                        decoration: const InputDecoration(
-                          labelText: 'Téléphone d\'urgence',
-                        ),
-                        keyboardType: TextInputType.phone,
-                      ),
-                    ],
-                  ),
+                _buildTextField(
+                  _secondaryPhoneController,
+                  'Téléphone secondaire',
+                  keyboardType: TextInputType.phone,
                 ),
-              ),
-              const SizedBox(height: 10),
-              Card(
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      _sectionTitle('Détails Supplémentaires'),
-                      TextFormField(
-                        controller: _yearOfEstablishmentController,
-                        decoration: const InputDecoration(
-                          labelText: 'Année de création',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (v) {
-                          if (v == null || v.isEmpty)
-                            return 'Champ obligatoire';
-                          if (int.tryParse(v) == null)
-                            return 'Doit être un nombre';
-                          return null;
-                        },
-                      ),
-                      SwitchListTile(
-                        title: const Text('École active'),
-                        value: _isActive,
-                        onChanged: (v) => setState(() => _isActive = v),
-                      ),
-                      SwitchListTile(
-                        title: const Text('École vérifiée'),
-                        value: _isVerified,
-                        onChanged: (v) => setState(() => _isVerified = v),
-                      ),
-                    ],
-                  ),
+                _buildTextField(
+                  _emergencyPhoneController,
+                  "'Téléphone d'urgence', keyboardType: TextInputType.phone",
                 ),
-              ),
-              const SizedBox(height: 10),
-              Card(
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _sectionTitle('Listes associées'),
-                      _buildListEditButton(
-                        'Types',
-                        _types,
-                        () => _editListDialog('Types', _types),
-                      ),
-                      _buildListEditButton(
-                        'Postes d\'emploi',
-                        _jobPosts,
-                        () => _editListDialog('Postes d\'emploi', _jobPosts),
-                      ),
-                      _buildListEditButton(
-                        'Cycles d\'éducation',
-                        _educationCycle,
-                        () => _editListDialog(
-                          'Cycles d\'éducation',
-                          _educationCycle,
-                        ),
-                      ),
-                    ],
-                  ),
+              ]),
+              _buildSectionCard('Détails Supplémentaires', [
+                _buildTextField(
+                  _yearOfEstablishmentController,
+                  'Année de création',
+                  keyboardType: TextInputType.number,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Champ obligatoire';
+                    if (int.tryParse(v) == null) return 'Doit être un nombre';
+                    return null;
+                  },
                 ),
-              ),
+                SwitchListTile(
+                  title: const Text('École active'),
+                  value: _isActive,
+                  onChanged: (v) => setState(() => _isActive = v),
+                ),
+                SwitchListTile(
+                  title: const Text('École vérifiée'),
+                  value: _isVerified,
+                  onChanged: (v) => setState(() => _isVerified = v),
+                ),
+              ]),
+              _buildSectionCard('Listes associées', [
+                _buildListEditButton(
+                  'Types',
+                  _types,
+                  () => _editListDialog('Types', _types),
+                ),
+                _buildListEditButton(
+                  "'Postes d'emploi'",
+                  _jobPosts,
+                  () => _editListDialog("'Postes d'emploi'", _jobPosts),
+                ),
+                _buildListEditButton(
+                  "'Cycles d'éducation'",
+                  _educationCycle,
+                  () =>
+                      _editListDialog("'Cycles d'éducation'", _educationCycle),
+                ),
+              ]),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard(String title, List<Widget> children) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [_sectionTitle(title), ...children],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label, {
+    int maxLines = 1,
+    String? Function(String?)? validator,
+    bool validatorRequired = false,
+    TextInputType? keyboardType,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(labelText: label),
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        validator:
+            validator ??
+            (validatorRequired
+                ? (v) => v == null || v.isEmpty ? 'Champ obligatoire' : null
+                : null),
       ),
     );
   }

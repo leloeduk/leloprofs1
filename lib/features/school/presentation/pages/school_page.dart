@@ -25,7 +25,7 @@ class _SchoolPageState extends State<SchoolPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Liste des écoles"),
         centerTitle: true,
@@ -67,7 +67,7 @@ class _SchoolPageState extends State<SchoolPage> {
                   onTap:
                       () => context.push('/school/${school.id}', extra: school),
                   child: Card(
-                    color: Theme.of(context).colorScheme.tertiary,
+                    color: Theme.of(context).colorScheme.secondary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

@@ -69,7 +69,7 @@ class RoleSelectionPage extends StatelessWidget {
           context.go(nextRoute, extra: authState.user);
         }
       } else {
-        await FirestoreService.updateUserRole(authState.user.id, role);
+        await FirestoreService.updateUserRole(authState.user.id, "visitor");
         context.read<AuthBloc>().add(UpdateUserRoleLocally(role));
         context.read<AuthBloc>().add(MarkUserAsRegistered());
         if (ModalRoute.of(context)?.isCurrent ?? false) {

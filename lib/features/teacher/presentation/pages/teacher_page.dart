@@ -31,6 +31,7 @@ class _TeacherPageState extends State<TeacherPage> {
         centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.tertiary,
       ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: BlocConsumer<TeacherBloc, TeacherState>(
         listener: (context, state) {
           if (state is TeacherError) {
@@ -67,7 +68,7 @@ class _TeacherPageState extends State<TeacherPage> {
                         extra: teacher,
                       ),
                   child: Card(
-                    color: Theme.of(context).colorScheme.tertiary,
+                    color: Theme.of(context).colorScheme.secondary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -138,7 +139,7 @@ class _TeacherPageState extends State<TeacherPage> {
                                             color:
                                                 Theme.of(
                                                   context,
-                                                ).colorScheme.secondary,
+                                                ).colorScheme.tertiary,
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -156,7 +157,7 @@ class _TeacherPageState extends State<TeacherPage> {
                                             color:
                                                 Theme.of(
                                                   context,
-                                                ).colorScheme.secondary,
+                                                ).colorScheme.tertiary,
                                             fontSize: 12,
                                           ),
                                         ),
@@ -172,7 +173,7 @@ class _TeacherPageState extends State<TeacherPage> {
                                             color:
                                                 Theme.of(
                                                   context,
-                                                ).colorScheme.secondary,
+                                                ).colorScheme.tertiary,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 12,
                                           ),

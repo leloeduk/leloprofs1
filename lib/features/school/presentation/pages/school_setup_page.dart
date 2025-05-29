@@ -20,20 +20,24 @@ class SchoolSetupPage extends StatefulWidget {
 class _SchoolSetupPageState extends State<SchoolSetupPage> {
   int _currentStep = 0;
   final _formKeyStep1 = GlobalKey<FormState>();
+  final _formKeyStep2 = GlobalKey<FormState>();
+
+  // Contrôleurs pour les champs
   final _schoolNameController = TextEditingController();
   final _townController = TextEditingController();
   final _departmentController = TextEditingController();
   final _countryController = TextEditingController();
   final _primaryPhoneController = TextEditingController();
-  // Ajoutez d'autres contrôleurs
+
+  // Variables pour les sélections
+  final Set<String> _selectedSchoolTypes = {};
+  final Set<String> _selectedEducationCycles = {};
+  String? _selectedYearOfEstablishment;
 
   @override
   void initState() {
     super.initState();
-    _schoolNameController.text =
-        widget
-            .initialUser
-            .name; // Le nom de l'utilisateur Google peut être le nom de l'école
+    _schoolNameController.text = widget.initialUser.name ?? '';
   }
 
   @override
@@ -43,23 +47,23 @@ class _SchoolSetupPageState extends State<SchoolSetupPage> {
     _departmentController.dispose();
     _countryController.dispose();
     _primaryPhoneController.dispose();
-    // Disposez les autres contrôleurs
     super.dispose();
   }
 
   void _onStepContinue() {
-    final isLastStep = _currentStep == _steps().length - 1;
-    if (isLastStep) {
-      // if (_formKeyStepN.currentState!.validate()) { // Valider la dernière étape
-      //   _completeProfile();
-      // }
-      _completeProfile(); // Pour l'exemple
+    switch (_currentStep) {
+      case 0:
+        if (!_formKeyStep1.currentState!.validate()) return;
+        break;
+      case 1:
+        if (!_formKeyStep2.currentState!.validate()) return;
+        break;
+    }
+
+    if (_currentStep < _steps().length - 1) {
+      setState(() => _currentStep += 1);
     } else {
-      if (_currentStep == 0 && _formKeyStep1.currentState!.validate()) {
-        setState(() => _currentStep += 1);
-      } else if (_currentStep != 0) {
-        setState(() => _currentStep += 1);
-      }
+      _completeProfile();
     }
   }
 
@@ -72,7 +76,10 @@ class _SchoolSetupPageState extends State<SchoolSetupPage> {
   }
 
   void _completeProfile() {
-    if (!_formKeyStep1.currentState!.validate()) return;
+    if (!_formKeyStep1.currentState!.validate() ||
+        !_formKeyStep2.currentState!.validate()) {
+      return;
+    }
 
     final schoolData = SchoolModel(
       id: widget.initialUser.id,
@@ -84,79 +91,220 @@ class _SchoolSetupPageState extends State<SchoolSetupPage> {
       country: _countryController.text.trim(),
       primaryPhone: _primaryPhoneController.text.trim(),
       isActive: true,
-      isVerified: false, // La vérification se fera plus tard
+      isVerified: false,
       createdAt: DateTime.now(),
       creationSource: 'app_setup',
-      yearOfEstablishment: DateTime.now().year, // À collecter
+      yearOfEstablishment:
+          _selectedYearOfEstablishment != null
+              ? int.parse(_selectedYearOfEstablishment!)
+              : DateTime.now().year,
       jobPosts: [],
-      types: [], // À collecter (ex: ['Primaire', 'Secondaire'])
-      educationCycle: [], // À collecter
-      // secondaryPhone: null,
-      // emergencyPhone: null,
-      // schoolCreationDate: null,
-      // profileImage: null,
-      // ratings: null,
-      // bio: null,
+      types: _selectedSchoolTypes.toList(),
+      educationCycle: _selectedEducationCycles.toList(),
+      secondaryPhone: null,
+      emergencyPhone: null,
+      schoolCreationDate: null,
+      ratings: null,
+      bio: null,
     );
+
     context.read<SchoolBloc>().add(CreateSchool(schoolData));
   }
 
   List<Step> _steps() {
     return [
+      // Étape 1: Informations de base
       Step(
-        title: const Text('Informations de l\'École'),
+        title: const Text('Informations de base'),
         content: Form(
           key: _formKeyStep1,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _schoolNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nom de l\'établissement',
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _schoolNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom de l\'établissement*',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator:
+                      (value) =>
+                          value!.isEmpty ? 'Ce champ est obligatoire' : null,
                 ),
-                validator: (value) => value!.isEmpty ? 'Champ requis' : null,
-              ),
-              TextFormField(
-                controller: _townController,
-                decoration: const InputDecoration(labelText: 'Ville'),
-                validator: (value) => value!.isEmpty ? 'Champ requis' : null,
-              ),
-              TextFormField(
-                controller: _departmentController,
-                decoration: const InputDecoration(
-                  labelText: 'Département/Région',
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _townController,
+                  decoration: const InputDecoration(
+                    labelText: 'Ville*',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator:
+                      (value) =>
+                          value!.isEmpty ? 'Ce champ est obligatoire' : null,
                 ),
-                validator: (value) => value!.isEmpty ? 'Champ requis' : null,
-              ),
-              TextFormField(
-                controller: _countryController,
-                decoration: const InputDecoration(labelText: 'Pays'),
-                validator: (value) => value!.isEmpty ? 'Champ requis' : null,
-              ),
-              TextFormField(
-                controller: _primaryPhoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Téléphone principal',
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _departmentController,
+                  decoration: const InputDecoration(
+                    labelText: 'Département/Région*',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator:
+                      (value) =>
+                          value!.isEmpty ? 'Ce champ est obligatoire' : null,
                 ),
-                keyboardType: TextInputType.phone,
-                validator: (value) => value!.isEmpty ? 'Champ requis' : null,
-              ),
-              // Ajoutez d'autres champs (année de création, types d'établissement, cycles, etc.)
-            ],
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _countryController,
+                  decoration: const InputDecoration(
+                    labelText: 'Pays*',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator:
+                      (value) =>
+                          value!.isEmpty ? 'Ce champ est obligatoire' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _primaryPhoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Téléphone principal*',
+                    border: OutlineInputBorder(),
+                    prefixText: '+',
+                  ),
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value!.isEmpty) return 'Ce champ est obligatoire';
+                    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                      return 'Entrez un numéro valide';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
           ),
         ),
         isActive: _currentStep >= 0,
         state: _currentStep > 0 ? StepState.complete : StepState.indexed,
       ),
+
+      // Étape 2: Informations supplémentaires
       Step(
-        title: const Text('Autres Détails'),
-        content: Column(
-          children: const [
-            Text(
-              'Section pour l\'année de création, types d\'établissement, cycles éducatifs, bio, etc.',
+        title: const Text('Informations supplémentaires'),
+        content: Form(
+          key: _formKeyStep2,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Type d\'établissement*',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      [
+                        'Primaire',
+                        'Secondaire',
+                        'Collège',
+                        'Lycée',
+                        'Université',
+                        'Professionnel',
+                        'Technique',
+                      ].map((type) {
+                        return FilterChip(
+                          label: Text(type),
+                          selected: _selectedSchoolTypes.contains(type),
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedSchoolTypes.add(type);
+                              } else {
+                                _selectedSchoolTypes.remove(type);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                ),
+                if (_selectedSchoolTypes.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Sélectionnez au moins un type',
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ),
+
+                const SizedBox(height: 24),
+                const Text(
+                  'Cycles éducatifs proposés*',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      [
+                        'Maternelle',
+                        'Primaire',
+                        'Collège',
+                        'Lycée',
+                        'Supérieur',
+                      ].map((cycle) {
+                        return FilterChip(
+                          label: Text(cycle),
+                          selected: _selectedEducationCycles.contains(cycle),
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedEducationCycles.add(cycle);
+                              } else {
+                                _selectedEducationCycles.remove(cycle);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                ),
+                if (_selectedEducationCycles.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Sélectionnez au moins un cycle',
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ),
+
+                const SizedBox(height: 24),
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: "Année de création*",
+                    border: OutlineInputBorder(),
+                  ),
+                  value: _selectedYearOfEstablishment,
+                  validator:
+                      (value) =>
+                          value == null ? 'Ce champ est obligatoire' : null,
+                  items: List.generate(
+                    50,
+                    (index) => DropdownMenuItem(
+                      value: (DateTime.now().year - index).toString(),
+                      child: Text((DateTime.now().year - index).toString()),
+                    ),
+                  ),
+                  onChanged:
+                      (value) =>
+                          setState(() => _selectedYearOfEstablishment = value),
+                ),
+              ],
             ),
-            Text('Cette section est à développer.'),
-          ],
+          ),
         ),
         isActive: _currentStep >= 1,
         state: _currentStep > 1 ? StepState.complete : StepState.indexed,
@@ -169,7 +317,6 @@ class _SchoolSetupPageState extends State<SchoolSetupPage> {
     return BlocListener<SchoolBloc, SchoolState>(
       listener: (context, state) {
         if (state is SchoolLoaded) {
-          // Ou un état plus spécifique comme SchoolProfileCreated
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Profil école créé avec succès!'),
@@ -181,39 +328,51 @@ class _SchoolSetupPageState extends State<SchoolSetupPage> {
         } else if (state is SchoolError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Erreur lors de la création: ${state.message}'),
+              content: Text('Erreur: ${state.message}'),
               backgroundColor: Colors.red,
             ),
           );
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Configurer Profil École')),
-        body: Stepper(
-          currentStep: _currentStep,
-          onStepContinue: _onStepContinue,
-          onStepTapped: (step) => setState(() => _currentStep = step),
-          onStepCancel: _onStepCancel,
-          steps: _steps(),
-          controlsBuilder: (BuildContext context, ControlsDetails details) {
-            final isLastStep = _currentStep == _steps().length - 1;
-            return Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: Row(
-                children: <Widget>[
-                  ElevatedButton(
-                    onPressed: details.onStepContinue,
-                    child: Text(isLastStep ? 'TERMINER' : 'CONTINUER'),
-                  ),
-                  if (_currentStep > 0)
-                    TextButton(
-                      onPressed: details.onStepCancel,
-                      child: const Text('RETOUR'),
+        appBar: AppBar(
+          title: const Text('Configuration du profil école'),
+          centerTitle: true,
+        ),
+        body: Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).primaryColor,
+            ),
+          ),
+          child: Stepper(
+            currentStep: _currentStep,
+            onStepContinue: _onStepContinue,
+            onStepTapped: (step) => setState(() => _currentStep = step),
+            onStepCancel: _onStepCancel,
+            steps: _steps(),
+            controlsBuilder: (context, details) {
+              final isLastStep = _currentStep == _steps().length - 1;
+              return Padding(
+                padding: const EdgeInsets.only(top: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (_currentStep > 0)
+                      OutlinedButton(
+                        onPressed: details.onStepCancel,
+                        child: const Text('RETOUR'),
+                      ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: details.onStepContinue,
+                      child: Text(isLastStep ? 'TERMINER' : 'SUIVANT'),
                     ),
-                ],
-              ),
-            );
-          },
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

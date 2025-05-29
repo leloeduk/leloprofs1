@@ -13,18 +13,16 @@ class JobofferEditPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final formattedDate = DateFormat('dd MMMM yyyy').format(offer.date);
+    final authState = context.watch<AuthBloc>().state;
     final isSchool =
-        context.read<AuthBloc>().state is Authenticated &&
-        (context.read<AuthBloc>().state as Authenticated).user.role == 'ecole';
+        authState is Authenticated && authState.user.role == 'ecole';
+    final isOwner = isSchool && offer.schoolId == authState.user.id;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(offer.title),
         actions: [
-          if (isSchool &&
-              offer.schoolId ==
-                  (context.read<AuthBloc>().state as Authenticated).user.id)
+          if (isOwner)
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () => context.push('/edit-offer', extra: offer),
@@ -43,7 +41,6 @@ class JobofferEditPage extends StatelessWidget {
             const SizedBox(height: 16),
             _buildDetailItem('Type de contrat', offer.id),
             _buildDetailItem('Domaine', offer.title),
-            // _buildDetailItem('Date de publication', formattedDate),
             _buildDetailItem('Salaire', '${offer.title} €/mois'),
             _buildDetailItem('Localisation', offer.description),
             const SizedBox(height: 20),
@@ -55,21 +52,6 @@ class JobofferEditPage extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8),
               child: Text(offer.description),
             ),
-            if (offer.description.isNotEmpty) ...[
-              const SizedBox(height: 20),
-              Text(
-                'Compétences requises:',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              // Padding(
-              //   padding: const EdgeInsets.only(top: 8),
-              //   child: Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: offer.description.map((req) =>
-              //       Text('• $req')).toList(),
-              //   ),
-              // ),
-            ],
             const SizedBox(height: 20),
             if (!isSchool)
               SizedBox(
@@ -100,7 +82,6 @@ class JobofferEditPage extends StatelessWidget {
   }
 
   void _applyToOffer(BuildContext context) {
-    // Implémentez la logique de postulation ici
     showDialog(
       context: context,
       builder:
@@ -114,7 +95,6 @@ class JobofferEditPage extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  // Logique de postulation
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

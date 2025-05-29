@@ -8,6 +8,11 @@ import 'package:leloprof/features/teacher/domain/models/teacher_model.dart';
 import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_bloc.dart';
 import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_event.dart';
 import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_state.dart';
+import 'package:leloprof/utils/models/listes.dart';
+import 'package:leloprof/utils/widgets/custom_dropdown_button.dart';
+import 'package:leloprof/utils/widgets/custom_text_field.dart';
+import 'package:leloprof/utils/widgets/custom_text_form_field_phone.dart';
+import 'package:leloprof/utils/widgets/custom_wrap_selected.dart';
 
 class TeacherSetupPage extends StatefulWidget {
   final UserModel initialUser;
@@ -31,7 +36,7 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
   // Variables pour les sélections
   String? _selectedGender;
   final Set<String> _selectedSubjects = {};
-  String? _selectedEducationCycle;
+  final Set<String> _selectedEducationCycle = {};
   String? _selectedDiploma;
   int? _yearsOfExperience;
 
@@ -39,12 +44,10 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
   void initState() {
     super.initState();
     // Pré-remplir l'email si disponible
-    if (widget.initialUser.name != null) {
-      final nameParts = widget.initialUser.name!.split(' ');
-      _firstNameController.text = nameParts.first;
-      if (nameParts.length > 1) {
-        _lastNameController.text = nameParts.sublist(1).join(' ');
-      }
+    final nameParts = widget.initialUser.name!.split(' ');
+    _firstNameController.text = nameParts.first;
+    if (nameParts.length > 1) {
+      _lastNameController.text = nameParts.sublist(1).join(' ');
     }
   }
 
@@ -99,13 +102,12 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
       phoneNumber: _phoneNumberController.text.trim(),
       department: _departmentController.text.trim(),
       // gender: _selectedGender,
-      country: '', // À implémenter
+      country: 'Congo', // À implémenter
       diplomas: _selectedDiploma != null ? [_selectedDiploma!] : [],
       yearsOfExperience: _yearsOfExperience ?? 0,
-      educationCycles:
-          _selectedEducationCycle != null ? [_selectedEducationCycle!] : [],
+      educationCycles: _selectedEducationCycle.toList(),
       subjects: _selectedSubjects.toList(),
-      languages: [], // À implémenter
+      languages: ["français"], // À implémenter
       isAvailable: true,
       isInspector: false,
       createdAt: DateTime.now(),
@@ -124,68 +126,42 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                TextFormField(
+                CustomTextField(
                   controller: _firstNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Prénom*',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator:
-                      (value) =>
-                          value!.isEmpty ? 'Ce champ est obligatoire' : null,
+                  label: "Prénom*",
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                CustomTextField(
                   controller: _lastNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom de famille*',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator:
-                      (value) =>
-                          value!.isEmpty ? 'Ce champ est obligatoire' : null,
+                  label: "Nom de famille*",
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Numéro de téléphone*',
-                    border: OutlineInputBorder(),
-                    prefixText: '+',
-                  ),
-                  keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value!.isEmpty) return 'Ce champ est obligatoire';
-                    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                      return 'Entrez un numéro valide';
-                    }
-                    return null;
+                CustomTextField(
+                  controller: _firstNameController,
+                  label: "Prénom*",
+                ),
+                const SizedBox(height: 16),
+                CustomTextFormFieldPhone(
+                  phoneNumberController: _phoneNumberController,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _departmentController,
+                  label: "Département/Région*",
+                ),
+                const SizedBox(height: 16),
+
+                CustomDropdownButton(
+                  title: "Votre genre",
+                  listes: ListesApp.genders,
+                  selectedItem: _selectedGender,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedGender = value;
+                    });
                   },
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _departmentController,
-                  decoration: const InputDecoration(
-                    labelText: 'Département/Région*',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator:
-                      (value) =>
-                          value!.isEmpty ? 'Ce champ est obligatoire' : null,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Genre',
-                    border: OutlineInputBorder(),
-                  ),
-                  value: _selectedGender,
-                  items: const [
-                    DropdownMenuItem(value: 'homme', child: Text('Homme')),
-                    DropdownMenuItem(value: 'femme', child: Text('Femme')),
-                  ],
-                  onChanged: (value) => setState(() => _selectedGender = value),
-                ),
               ],
             ),
           ),
@@ -208,38 +184,7 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children:
-                      [
-                        'Mathématiques',
-                        'Français',
-                        'SVT',
-                        'Physique-Chimie',
-                        'Philosophie',
-                        'Informatique',
-                        'Histoire-Géographie',
-                        'Anglais',
-                        'Dessin',
-                        'EPS',
-                        'Autres',
-                      ].map((subject) {
-                        return FilterChip(
-                          label: Text(subject),
-                          selected: _selectedSubjects.contains(subject),
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedSubjects.add(subject);
-                              } else {
-                                _selectedSubjects.remove(subject);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                ),
+                CustomWrapSelected(childrenList: ListesApp.subjets),
                 if (_selectedSubjects.isEmpty)
                   const Padding(
                     padding: EdgeInsets.only(top: 4),
@@ -250,65 +195,36 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
                   ),
 
                 const SizedBox(height: 24),
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: "Cycle d'enseignement*",
-                    border: OutlineInputBorder(),
+                CustomWrapSelected(childrenList: ListesApp.levels),
+                if (_selectedEducationCycle.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Sélectionnez au moins une matière',
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                    ),
                   ),
-                  value: _selectedEducationCycle,
-                  validator:
-                      (value) =>
-                          value == null ? 'Ce champ est obligatoire' : null,
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Maternelle',
-                      child: Text('Maternelle'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Primaire',
-                      child: Text('Primaire'),
-                    ),
-                    DropdownMenuItem(value: 'Collège', child: Text('Collège')),
-                    DropdownMenuItem(value: 'Lycée', child: Text('Lycée')),
-                    DropdownMenuItem(
-                      value: 'Université',
-                      child: Text('Université'),
-                    ),
-                  ],
-                  onChanged:
-                      (value) =>
-                          setState(() => _selectedEducationCycle = value),
-                ),
 
                 const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: "Niveau d'études*",
-                    border: OutlineInputBorder(),
-                  ),
-                  value: _selectedDiploma,
-                  validator:
-                      (value) =>
-                          value == null ? 'Ce champ est obligatoire' : null,
-                  items: const [
-                    DropdownMenuItem(value: 'CEPE', child: Text('CEPE')),
-                    DropdownMenuItem(value: 'BEPC', child: Text('BEPC')),
-                    DropdownMenuItem(value: 'BAC', child: Text('BAC')),
-                    DropdownMenuItem(value: 'BAC +1', child: Text('BAC +1')),
-                    DropdownMenuItem(value: 'BAC +2', child: Text('BAC +2')),
-                    DropdownMenuItem(value: 'Licence', child: Text('Licence')),
-                    DropdownMenuItem(value: 'Master', child: Text('Master')),
-                    DropdownMenuItem(
-                      value: 'Ingénieur',
-                      child: Text('Ingénieur'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Doctorat',
-                      child: Text('Doctorat'),
-                    ),
-                  ],
-                  onChanged:
-                      (value) => setState(() => _selectedDiploma = value),
+                CustomDropdownButton(
+                  title: "Votre genre",
+                  listes: ListesApp.genders,
+                  selectedItem: _selectedGender,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedGender = value;
+                    });
+                  },
+                ),
+                CustomDropdownButton(
+                  title: "Votre niveau d'études",
+                  listes: ListesApp.diplomas,
+                  selectedItem: _selectedDiploma,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDiploma = value;
+                    });
+                  },
                 ),
 
                 const SizedBox(height: 16),
@@ -321,8 +237,9 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value!.isEmpty) return 'Ce champ est obligatoire';
-                    if (int.tryParse(value) == null)
+                    if (int.tryParse(value) == null) {
                       return 'Entrez un nombre valide';
+                    }
                     return null;
                   },
                   onChanged:
@@ -362,7 +279,7 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Configuration du profil enseignant'),
+          title: const Text('Créer un profil enseignant'),
           centerTitle: true,
         ),
         body: Theme(
