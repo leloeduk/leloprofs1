@@ -117,7 +117,7 @@ final GoRouter appRouter = GoRouter(
       name: 'edit-school',
       builder: (context, state) {
         final school = state.extra as SchoolModel;
-        return EditSchoolPage(school: school); // À implémenter
+        return SchoolEditPage(school: school); // À implémenter
       },
     ),
     GoRoute(

@@ -25,13 +25,11 @@ class _JobofferPageState extends State<JobofferPage> {
     if (authState is Authenticated) {
       final user = authState.user;
 
-      // Si l'utilisateur est une école, on charge les offres de cette école
       if (user.role == 'ecole') {
         context.read<JobOfferBloc>().add(
           LoadJobOffers(user.id, schoolUid: user.id),
         );
       } else {
-        // Sinon, charge toutes les offres sans filtre
         context.read<JobOfferBloc>().add(
           LoadJobOffers('all', schoolUid: 'public'),
         );
@@ -42,10 +40,11 @@ class _JobofferPageState extends State<JobofferPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Offres d'emploi")),
       body: BlocBuilder<JobOfferBloc, JobOfferState>(
         builder: (context, state) {
-          if (state is JobOffersLoaded) {
+          if (state is JobOfferLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is JobOffersLoaded) {
             final offers = state.offers;
 
             if (offers.isEmpty) {
@@ -86,7 +85,7 @@ class _JobofferPageState extends State<JobofferPage> {
             return Center(child: Text('Erreur: ${state.message}'));
           }
 
-          // Chargement initial
+          // Par défaut, on affiche un loader
           return const Center(child: CircularProgressIndicator());
         },
       ),

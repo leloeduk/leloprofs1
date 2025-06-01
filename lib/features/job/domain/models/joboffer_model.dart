@@ -97,20 +97,28 @@ class JobOfferModel extends Equatable {
   // Conversion depuis/towards JSON
   factory JobOfferModel.fromJson(Map<String, dynamic> json) {
     return JobOfferModel(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      schoolId: json['schoolId'] as String,
-      schoolName: json['schoolName'] as String,
+      id: json['id'] as String? ?? '', // valeur par défaut chaîne vide
+      title: json['title'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      schoolId: json['schoolId'] as String? ?? '',
+      schoolName: json['schoolName'] as String? ?? '',
       schoolLogo: json['schoolLogo'] as String?,
-      contractType: json['contractType'] as String,
-      domain: json['domain'] as String,
-      location: json['location'] as String,
-      salary: (json['salary'] as num).toDouble(),
-      hoursPerWeek: json['hoursPerWeek'] as int,
-      date: DateTime.parse(json['date'] as String),
-      requirements: List<String>.from(json['requirements'] ?? []),
-      benefits: List<String>.from(json['benefits'] ?? []),
+      contractType: json['contractType'] as String? ?? '',
+      domain: json['domain'] as String? ?? '',
+      location: json['location'] as String? ?? '',
+      salary:
+          (json['salary'] != null) ? (json['salary'] as num).toDouble() : 0.0,
+      hoursPerWeek: json['hoursPerWeek'] as int? ?? 0,
+      date:
+          json['date'] != null
+              ? DateTime.parse(json['date'] as String)
+              : DateTime.now(),
+      requirements:
+          json['requirements'] != null
+              ? List<String>.from(json['requirements'])
+              : [],
+      benefits:
+          json['benefits'] != null ? List<String>.from(json['benefits']) : [],
       contactEmail: json['contactEmail'] as String?,
       contactPhone: json['contactPhone'] as String?,
       website: json['website'] as String?,

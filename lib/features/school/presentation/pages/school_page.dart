@@ -26,12 +26,7 @@ class _SchoolPageState extends State<SchoolPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text("Liste des écoles"),
-        centerTitle: true,
-        backgroundColor: Colors.redAccent,
-        elevation: 0,
-      ),
+
       body: BlocConsumer<SchoolBloc, SchoolState>(
         listener: (context, stateSchool) {
           if (stateSchool is SchoolError) {

@@ -55,11 +55,18 @@ class SchoolBloc extends Bloc<SchoolEvent, SchoolState> {
     Emitter<SchoolState> emit,
   ) async {
     try {
+      print('>>> Bloc: Création d\'école en cours...');
+      emit(SchoolLoading());
       await schoolRepository.createSchool(event.school);
-      final schools = schoolRepository.getSchools();
-      emit(SchoolLoaded(schools as List<SchoolModel>));
+      print('>>> Bloc: Création terminée, chargement des écoles...');
+      final schools = await schoolRepository.getSchools();
+      print('>>> Bloc: ${schools.length} école(s) trouvée(s).');
+      emit(SchoolLoaded(schools));
     } catch (e) {
-      emit(SchoolError("Erreur lors de la création de l'école"));
+      print('>>> Bloc: Erreur lors de la création - $e');
+      emit(
+        SchoolError("Erreur lors de la création de l'école : ${e.toString()}"),
+      );
     }
   }
 

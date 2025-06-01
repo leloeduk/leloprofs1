@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../auth/domain/entities/user_model.dart';
 import 'package:leloprof/features/teacher/domain/models/teacher_model.dart';
 
-class TeacherDetailPage extends StatelessWidget {
+class TeacherDetailPage extends StatefulWidget {
   final TeacherModel teacher;
   final String currentUserId;
 
@@ -14,8 +17,26 @@ class TeacherDetailPage extends StatelessWidget {
   });
 
   @override
+  State<TeacherDetailPage> createState() => _TeacherDetailPageState();
+}
+
+class _TeacherDetailPageState extends State<TeacherDetailPage> {
+  File? _selectedImage;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bool canEdit = teacher.id == currentUserId;
+    final bool canEdit = widget.teacher.id == widget.currentUserId;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -29,9 +50,9 @@ class TeacherDetailPage extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  teacher.profileImageUrl != null
+                  widget.teacher.profileImageUrl != null
                       ? Image.network(
-                        teacher.profileImageUrl!,
+                        widget.teacher.profileImageUrl!,
                         fit: BoxFit.cover,
                       )
                       : Container(color: Colors.grey.shade800),
@@ -44,7 +65,10 @@ class TeacherDetailPage extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed:
-                      () => context.pushNamed('edit-teacher', extra: teacher),
+                      () => context.pushNamed(
+                        'edit-teacher',
+                        extra: widget.teacher,
+                      ),
                 ),
             ],
           ),
@@ -56,18 +80,18 @@ class TeacherDetailPage extends StatelessWidget {
                   CircleAvatar(
                     radius: 60,
                     backgroundImage:
-                        teacher.profileImageUrl != null
-                            ? NetworkImage(teacher.profileImageUrl!)
+                        widget.teacher.profileImageUrl != null
+                            ? NetworkImage(widget.teacher.profileImageUrl!)
                             : null,
                     child:
-                        teacher.profileImageUrl == null
+                        widget.teacher.profileImageUrl == null
                             ? Icon(Icons.person, size: 60, color: Colors.white)
                             : null,
                     backgroundColor: Colors.red.shade600,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '${teacher.firstName} ${teacher.lastName}',
+                    '${widget.teacher.firstName} ${widget.teacher.lastName}',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -80,16 +104,18 @@ class TeacherDetailPage extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color:
-                          teacher.isAvailable
+                          widget.teacher.isAvailable
                               ? Colors.green.shade100
                               : Colors.red.shade100,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      teacher.isAvailable ? "✅ Disponible" : "❌ Non disponible",
+                      widget.teacher.isAvailable
+                          ? "✅ Disponible"
+                          : "❌ Non disponible",
                       style: TextStyle(
                         color:
-                            teacher.isAvailable
+                            widget.teacher.isAvailable
                                 ? Colors.green.shade800
                                 : Colors.red.shade800,
                         fontWeight: FontWeight.w600,
@@ -122,84 +148,117 @@ class TeacherDetailPage extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               child: Column(
                 children: [
+                  _buildImagePicker(),
+                  const SizedBox(height: 10),
                   _buildInfoSection(
                     context,
                     Icons.school,
                     'Département',
-                    teacher.department,
+                    widget.teacher.department,
                   ),
                   _buildInfoSection(
                     context,
                     Icons.phone,
                     'Téléphone',
-                    teacher.phoneNumber,
+                    widget.teacher.phoneNumber,
                   ),
-                  if (teacher.secondaryPhone != null)
+                  if (widget.teacher.secondaryPhone != null)
                     _buildInfoSection(
                       context,
                       Icons.phone_android,
                       'Autre téléphone',
-                      teacher.secondaryPhone!,
+                      widget.teacher.secondaryPhone!,
                     ),
-                  if (teacher.country != null)
+                  if (widget.teacher.country != null)
                     _buildInfoSection(
                       context,
                       Icons.flag,
                       'Pays',
-                      teacher.country!,
+                      widget.teacher.country!,
                     ),
                   _buildInfoSection(
                     context,
                     Icons.workspace_premium,
                     'Diplômes',
-                    teacher.diplomas.join(", "),
+                    widget.teacher.diplomas.join(", "),
                   ),
                   _buildInfoSection(
                     context,
                     Icons.timeline,
                     'Expérience',
-                    '${teacher.yearsOfExperience} ans',
+                    '${widget.teacher.yearsOfExperience} ans',
                   ),
                   _buildInfoSection(
                     context,
                     Icons.book,
                     'Matières',
-                    teacher.subjects.join(", "),
+                    widget.teacher.subjects.join(", "),
                   ),
                   _buildInfoSection(
                     context,
                     Icons.language,
                     'Langues',
-                    teacher.languages.join(", "),
+                    widget.teacher.languages.join(", "),
                   ),
                   _buildInfoSection(
                     context,
                     Icons.school_outlined,
                     'Cycles éducatifs',
-                    teacher.educationCycles.join(", "),
+                    widget.teacher.educationCycles.join(", "),
                   ),
                   _buildInfoSection(
                     context,
                     Icons.verified,
                     'Inspecteur',
-                    teacher.isInspector ? "Oui" : "Non",
+                    widget.teacher.isInspector ? "Oui" : "Non",
                   ),
-                  if (teacher.teacherSince != null)
+                  if (widget.teacher.teacherSince != null)
                     _buildInfoSection(
                       context,
                       Icons.date_range,
                       'Enseigne depuis',
-                      '${teacher.teacherSince!.year}',
+                      '${widget.teacher.teacherSince!.year}',
                     ),
-                  if (teacher.rating != null)
+                  if (widget.teacher.rating != null)
                     _buildInfoSection(
                       context,
                       Icons.star,
                       'Note',
-                      '${teacher.rating!.toStringAsFixed(1)} / 5',
+                      '${widget.teacher.rating!.toStringAsFixed(1)} / 5',
                     ),
                   const SizedBox(height: 30),
                 ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImagePicker() {
+    return Center(
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: 60,
+            backgroundImage:
+                _selectedImage != null
+                    ? FileImage(_selectedImage!)
+                    : (widget.teacher.profileImageUrl != null
+                        ? NetworkImage(widget.teacher.profileImageUrl!)
+                        : AssetImage('assets/images/default_school.png')
+                            as ImageProvider),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: InkWell(
+              onTap: _pickImage,
+              child: CircleAvatar(
+                backgroundColor: Colors.blue,
+                radius: 20,
+                child: Icon(Icons.camera_alt, color: Colors.white),
               ),
             ),
           ),

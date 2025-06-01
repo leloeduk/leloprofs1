@@ -27,3 +27,8 @@ class TeacherError extends TeacherState {
   @override
   List<Object?> get props => [message];
 }
+
+class ConnectionFailure extends TeacherState {
+  final String message;
+  ConnectionFailure(this.message);
+}

@@ -26,11 +26,6 @@ class _TeacherPageState extends State<TeacherPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nos Enseignants'),
-        centerTitle: true,
-        backgroundColor: Theme.of(context).colorScheme.tertiary,
-      ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: BlocConsumer<TeacherBloc, TeacherState>(
         listener: (context, state) {

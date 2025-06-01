@@ -44,3 +44,5 @@ class UpdateTeacherPlan extends TeacherEvent {
   @override
   List<Object?> get props => [teacherId, newPlan];
 }
+
+class CheckConnection extends TeacherEvent {}

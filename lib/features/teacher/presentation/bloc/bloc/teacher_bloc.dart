@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'teacher_event.dart';
 import 'teacher_state.dart';
 import '../../../domain/repositories/teacher_repository.dart';
@@ -84,6 +85,11 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
         ),
       );
     }
+  }
+
+  Future<bool> isConnected() async {
+    final result = await Connectivity().checkConnectivity();
+    return result != ConnectivityResult.none;
   }
 
   // Future<void> _onUpdateTeacherPlan(

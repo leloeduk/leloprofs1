@@ -19,6 +19,35 @@ class SchoolDetailPage extends StatefulWidget {
 
 class _SchoolDetailPageState extends State<SchoolDetailPage> {
   late final JobOfferModel offer;
+
+  @override
+  void initState() {
+    offer = JobOfferModel(
+      id: '', // À générer plus tard
+      title: '',
+      description: '',
+      schoolId: widget.school.id,
+      schoolName: widget.school.name,
+      schoolLogo: widget.school.profileImageUrl,
+      contractType: '',
+      domain: '', // ou widget.school.domain si disponible
+      location: widget.school.town,
+      salary: 0.0,
+      hoursPerWeek: 0,
+      date: DateTime.now(),
+      // department: widget.school.department,
+      // educationCycle: widget.school.educationCycle.isNotEmpty
+      //     ? widget.school.educationCycle.first
+      //     : '',
+      // subject: '',
+      // language: '',
+      // isRemote: false,
+      // isActive: true,
+      // createdAt: DateTime.now(),
+    );
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -63,7 +92,7 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
             actions: [
               if (canEdit)
                 IconButton(
-                  icon: const Icon(Icons.edit),
+                  icon: const Icon(Icons.edit, size: 50),
                   onPressed:
                       () => context.pushNamed(
                         'edit-school',
@@ -185,8 +214,12 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Center(
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            context.pushNamed('/edit-offer', extra: offer);
+                          onPressed: () async {
+                            await context.pushNamed(
+                              'edit-offer', //  correspond à name: 'edit-offer'
+                              extra:
+                                  offer, //  on passe l’objet JobOfferModel en extra
+                            );
                           },
                           icon: const Icon(Icons.add),
                           label: const Text('Ajouter une offre'),
