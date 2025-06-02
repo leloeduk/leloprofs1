@@ -6,7 +6,6 @@ import '../../../auth/presentation/bloc/bloc/auth_state.dart';
 import '../bloc/bloc/teacher_bloc.dart';
 import '../bloc/bloc/teacher_event.dart';
 import '../bloc/bloc/teacher_state.dart';
-import 'permission.dart';
 
 class TeacherPage extends StatefulWidget {
   final String role;
@@ -42,40 +41,36 @@ class _TeacherPageState extends State<TeacherPage> {
 
           if (state is TeacherLoaded) {
             final teachers = state.teachers;
-            final authState = context.read<AuthBloc>().state;
-            final currentUserId =
-                authState is Authenticated ? authState.user.id : null;
 
             if (teachers.isEmpty) {
               return const Center(child: Text("Aucun enseignant trouvé."));
             }
 
-            return ListView.builder(
+            return ListView.separated(
               padding: const EdgeInsets.all(12),
               itemCount: teachers.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final teacher = teachers[index];
 
-                return GestureDetector(
+                return InkWell(
                   onTap:
                       () => context.push(
                         '/teacher/${teacher.id}',
                         extra: teacher,
                       ),
+                  borderRadius: BorderRadius.circular(12),
                   child: Card(
-                    color: Theme.of(context).colorScheme.secondary,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
                     child: Padding(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           CircleAvatar(
-                            radius: 25,
+                            radius: 30,
                             backgroundImage:
                                 teacher.profileImageUrl != null
                                     ? NetworkImage(teacher.profileImageUrl!)
@@ -85,100 +80,62 @@ class _TeacherPageState extends State<TeacherPage> {
                                     ? const Icon(Icons.person, size: 30)
                                     : null,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                Text(
+                                  '${teacher.firstName} ${teacher.lastName}',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      '${teacher.firstName} ${teacher.lastName}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                      ),
+                                    Icon(
+                                      teacher.isAvailable
+                                          ? Icons.check_circle
+                                          : Icons.cancel,
+                                      color:
+                                          teacher.isAvailable
+                                              ? Colors.green
+                                              : Colors.red,
+                                      size: 18,
                                     ),
+                                    const SizedBox(width: 6),
                                     Text(
                                       teacher.isAvailable
-                                          ? "✅Disponible"
-                                          : "❌Non disponible",
+                                          ? 'Disponible'
+                                          : 'Non disponible',
                                       style: TextStyle(
                                         color:
                                             teacher.isAvailable
-                                                ? Colors.green.shade900
-                                                : Colors.red.shade900,
+                                                ? Colors.green.shade800
+                                                : Colors.red.shade800,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 2),
-
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 12,
+                                  runSpacing: 4,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Icon(
-                                          Icons.workspace_premium,
-                                          color: Colors.red,
-                                        ),
-                                        Text(
-                                          teacher.diplomas.first,
-                                          style: TextStyle(
-                                            color:
-                                                Theme.of(
-                                                  context,
-                                                ).colorScheme.tertiary,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
+                                    _infoChip(
+                                      Icons.workspace_premium,
+                                      teacher.diplomas.first,
                                     ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Text(
-                                          teacher.subjects.first,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                Theme.of(
-                                                  context,
-                                                ).colorScheme.tertiary,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
+                                    _infoChip(
+                                      Icons.menu_book,
+                                      teacher.subjects.first,
                                     ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Text(
-                                          teacher.educationCycles.first,
-                                          style: TextStyle(
-                                            color:
-                                                Theme.of(
-                                                  context,
-                                                ).colorScheme.tertiary,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
+                                    _infoChip(
+                                      Icons.school,
+                                      teacher.educationCycles.first,
                                     ),
                                   ],
                                 ),
-
-                                const SizedBox(height: 6),
                               ],
                             ),
                           ),
@@ -198,6 +155,20 @@ class _TeacherPageState extends State<TeacherPage> {
           return const SizedBox();
         },
       ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: Colors.redAccent),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
+      ],
     );
   }
 }

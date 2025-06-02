@@ -51,10 +51,9 @@ class MyApp extends StatelessWidget {
           create: (_) => SchoolBloc(schoolRepository: FirebaseSchoolRepos()),
         ),
         BlocProvider(
-          create:
-              (_) => JobOfferBloc(
-                jobOfferRepository: FirebaseJobofferRepos(),
-              ), // Injection de la dépendance
+          create: (_) => JobOfferBloc(firebaseJobofferRepos),
+
+          // Injection de la dépendance
         ),
       ],
       child: MaterialApp.router(

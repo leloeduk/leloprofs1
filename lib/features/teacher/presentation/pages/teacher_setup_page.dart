@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:leloprof/features/auth/domain/entities/user_model.dart';
 import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_event.dart';
@@ -10,6 +13,7 @@ import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_event.d
 import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_state.dart';
 import 'package:leloprof/utils/models/listes.dart';
 import 'package:leloprof/utils/widgets/custom_dropdown_button.dart';
+import 'package:leloprof/utils/widgets/custom_selected_image.dart';
 import 'package:leloprof/utils/widgets/custom_text_field.dart';
 import 'package:leloprof/utils/widgets/custom_text_form_field_phone.dart';
 import 'package:leloprof/utils/widgets/custom_wrap_selected.dart';
@@ -39,6 +43,7 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
   final Set<String> _selectedEducationCycle = {};
   String? _selectedDiploma;
   int? _yearsOfExperience;
+  String? _selectedImage;
 
   @override
   void initState() {
@@ -102,7 +107,8 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
       phoneNumber: _phoneNumberController.text.trim(),
       department: _departmentController.text.trim(),
       // gender: _selectedGender,
-      country: 'Congo', // À implémenter
+      country: 'Congo-Brazzaville',
+      diplomaUrl: "", //
       diplomas: _selectedDiploma != null ? [_selectedDiploma!] : [],
       yearsOfExperience: _yearsOfExperience ?? 0,
       educationCycles: _selectedEducationCycle.toList(),
@@ -111,6 +117,11 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
       isAvailable: true,
       isInspector: false,
       createdAt: DateTime.now(),
+      bio: '',
+      workshopParticipationCount: 0,
+      profileImageUrl: _selectedImage,
+
+      isCivilServant: false,
     );
 
     context.read<TeacherBloc>().add(CreateTeacher(teacherData));
@@ -126,6 +137,15 @@ class _TeacherSetupPageState extends State<TeacherSetupPage> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                ReusableImagePicker(
+                  initialImageFile: null, // ou une File existante
+                  imageUrl: _selectedImage,
+                  onImageSelected: (file) {
+                    // Enregistre ou envoie l'image sélectionnée
+                    print("Image sélectionnée : ${file.path}");
+                  },
+                ),
+
                 CustomTextField(
                   controller: _firstNameController,
                   label: "Prénom*",

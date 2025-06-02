@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:leloprof/features/job/domain/models/joboffer_model.dart';
 import 'package:leloprof/features/school/domain/models/school_model.dart';
 
+import '../../../job/presentation/pages/joboffer_edit_page.dart';
+
 class SchoolDetailPage extends StatefulWidget {
   final SchoolModel school;
   final String currentUserId;
@@ -23,27 +25,35 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
   @override
   void initState() {
     offer = JobOfferModel(
-      id: '', // À générer plus tard
-      title: '',
-      description: '',
+      jobId: '', // Généré côté serveur ou avec UUID
+      creationDate: DateTime.now(),
+      expirationDate: DateTime.now().add(
+        const Duration(days: 30),
+      ), // 30 jours par défaut
+      applicationDeadline: DateTime.now().add(
+        const Duration(days: 15),
+      ), // 15 jours par défaut
       schoolId: widget.school.id,
       schoolName: widget.school.name,
-      schoolLogo: widget.school.profileImageUrl,
-      contractType: '',
-      domain: '', // ou widget.school.domain si disponible
-      location: widget.school.town,
-      salary: 0.0,
-      hoursPerWeek: 0,
-      date: DateTime.now(),
-      // department: widget.school.department,
-      // educationCycle: widget.school.educationCycle.isNotEmpty
-      //     ? widget.school.educationCycle.first
-      //     : '',
-      // subject: '',
-      // language: '',
-      // isRemote: false,
-      // isActive: true,
-      // createdAt: DateTime.now(),
+      schoolLogoUrl: widget.school.profileImageUrl,
+      schoolCountry: widget.school.country, // Valeur par défaut
+      schoolCity: widget.school.town,
+      schoolAddress: '', // À remplir manuellement
+      title: '',
+      description: '',
+      contractType: ContractType.fullTime, // Valeur par défaut
+      schoolLevel: SchoolLevel.primary, // Valeur par défaut
+      teachingDomain: null,
+      subjects: null,
+      monthlySalary: null,
+      weeklyHours: null,
+      requiredGender: null,
+      contactEmail: widget.school.email, // Email de l'école par défaut
+      contactPhone:
+          widget.school.primaryPhone, // Téléphone de l'école par défaut
+      requirements: [],
+      benefits: [],
+      applicantIds: [],
     );
     super.initState();
   }
@@ -93,11 +103,12 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
               if (canEdit)
                 IconButton(
                   icon: const Icon(Icons.edit, size: 50),
-                  onPressed:
-                      () => context.pushNamed(
-                        'edit-school',
-                        extra: widget.school,
-                      ),
+                  onPressed: () async {
+                    await context.pushNamed(
+                      'edit-school',
+                      extra: widget.school,
+                    );
+                  },
                 ),
             ],
           ),
@@ -216,9 +227,8 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                         child: ElevatedButton.icon(
                           onPressed: () async {
                             await context.pushNamed(
-                              'edit-offer', //  correspond à name: 'edit-offer'
-                              extra:
-                                  offer, //  on passe l’objet JobOfferModel en extra
+                              'editJobOffer',
+                              extra: {'offer': offer, 'school': widget.school},
                             );
                           },
                           icon: const Icon(Icons.add),
@@ -256,7 +266,7 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                     context,
                     Icons.verified_user_outlined,
                     'Statut',
-                    widget.school.isActive ? 'Actif' : 'Inactif',
+                    widget.school.isEnabled ? 'Actif' : 'Inactif',
                   ),
                   const SizedBox(height: 40),
                 ],

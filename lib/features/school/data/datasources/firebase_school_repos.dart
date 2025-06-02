@@ -21,7 +21,7 @@ class FirebaseSchoolRepos implements SchoolRepository {
   @override
   Future<void> createSchool(SchoolModel school) async {
     try {
-      await firestore.collection('schools').doc(school.id).set(school.toMap());
+      await firestore.collection('schools').doc(school.id).set(school.toJson());
     } catch (e) {
       throw Exception('Erreur lors de la création de l\'école : $e');
     }
@@ -33,7 +33,7 @@ class FirebaseSchoolRepos implements SchoolRepository {
       await firestore
           .collection('schools')
           .doc(school.id)
-          .update(school.toMap());
+          .update(school.toJson());
     } catch (e) {
       throw Exception('Erreur lors de la mise à jour de l\'école : $e');
     }

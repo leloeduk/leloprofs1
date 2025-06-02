@@ -1,13 +1,13 @@
-import 'package:bloc/bloc.dart';
-
-import '../../../domain/repositories/joboffer_repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'joboffer_event.dart';
 import 'joboffer_state.dart';
+import '../../../domain/models/joboffer_model.dart';
+import '../../../domain/repositories/joboffer_repository.dart';
 
 class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
-  final JobOfferRepository jobOfferRepository;
+  final JobOfferRepository repository;
 
-  JobOfferBloc({required this.jobOfferRepository}) : super(JobOfferInitial()) {
+  JobOfferBloc(this.repository) : super(JobOfferInitial()) {
     on<LoadJobOffers>(_onLoadJobOffers);
     on<CreateJobOffer>(_onCreateJobOffer);
     on<UpdateJobOffer>(_onUpdateJobOffer);
@@ -19,13 +19,13 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
     Emitter<JobOfferState> emit,
   ) async {
     emit(JobOfferLoading());
+
     try {
-      final jobOffers = await jobOfferRepository.fetchAllJobOffers();
-      emit(JobOffersLoaded(jobOffers));
+      // Charge les offres, filtrées par schoolId si elle est fournie
+      final offers = await repository.fetchAllJobOffers(event.schoolId);
+      emit(JobOfferLoaded(offers));
     } catch (e) {
-      emit(
-        JobOfferError('Erreur lors du chargement des offres : ${e.toString()}'),
-      );
+      emit(JobOfferError("Erreur lors du chargement : $e"));
     }
   }
 
@@ -33,17 +33,11 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
     CreateJobOffer event,
     Emitter<JobOfferState> emit,
   ) async {
-    emit(JobOfferLoading());
     try {
-      await jobOfferRepository.createJobOffer(event.offer);
-      final jobOffers = await jobOfferRepository.fetchAllJobOffers();
-      emit(JobOffersLoaded(jobOffers));
+      await repository.createJobOffer(event.jobOffer);
+      add(LoadJobOffers());
     } catch (e) {
-      emit(
-        JobOfferError(
-          'Erreur lors de la création de l\'offre : ${e.toString()}',
-        ),
-      );
+      emit(JobOfferError("Erreur lors de la création : $e"));
     }
   }
 
@@ -51,17 +45,11 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
     UpdateJobOffer event,
     Emitter<JobOfferState> emit,
   ) async {
-    emit(JobOfferLoading());
     try {
-      await jobOfferRepository.updateJobOffer(event.offer);
-      final jobOffers = await jobOfferRepository.fetchAllJobOffers();
-      emit(JobOffersLoaded(jobOffers));
+      await repository.updateJobOffer(event.jobOffer);
+      add(LoadJobOffers());
     } catch (e) {
-      emit(
-        JobOfferError(
-          'Erreur lors de la mise à jour de l\'offre : ${e.toString()}',
-        ),
-      );
+      emit(JobOfferError("Erreur lors de la mise à jour : $e"));
     }
   }
 
@@ -69,17 +57,11 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
     DeleteJobOffer event,
     Emitter<JobOfferState> emit,
   ) async {
-    emit(JobOfferLoading());
     try {
-      await jobOfferRepository.deleteJobOffer(event.offerId);
-      final jobOffers = await jobOfferRepository.fetchAllJobOffers();
-      emit(JobOffersLoaded(jobOffers));
+      await repository.deleteJobOffer(event.jobId);
+      add(LoadJobOffers());
     } catch (e) {
-      emit(
-        JobOfferError(
-          'Erreur lors de la suppression de l\'offre : ${e.toString()}',
-        ),
-      );
+      emit(JobOfferError("Erreur lors de la suppression : $e"));
     }
   }
 }

@@ -1,43 +1,44 @@
 import 'package:equatable/equatable.dart';
-
 import '../../../domain/models/joboffer_model.dart';
 
 abstract class JobOfferEvent extends Equatable {
-  const JobOfferEvent();
+  @override
+  List<Object?> get props => [];
 }
 
 class LoadJobOffers extends JobOfferEvent {
-  final String schoolId;
-  const LoadJobOffers(this.schoolId, {required String schoolUid});
+  final String? schoolId;
+
+  LoadJobOffers([this.schoolId]);
+
   @override
   List<Object?> get props => [schoolId];
 }
 
 class CreateJobOffer extends JobOfferEvent {
-  final JobOfferModel offer;
-  const CreateJobOffer(this.offer);
+  final JobOfferModel jobOffer;
+
+  CreateJobOffer(this.jobOffer);
+
   @override
-  List<Object?> get props => [offer];
+  List<Object?> get props => [jobOffer];
 }
 
 class UpdateJobOffer extends JobOfferEvent {
-  final JobOfferModel offer;
-  const UpdateJobOffer(this.offer);
-  @override
-  List<Object?> get props => [offer];
-}
+  final JobOfferModel jobOffer;
 
-class ToggleJobOfferStatus extends JobOfferEvent {
-  final String offerId;
-  final bool isActive;
-  const ToggleJobOfferStatus(this.offerId, this.isActive);
+  UpdateJobOffer(this.jobOffer);
+
   @override
-  List<Object?> get props => [offerId, isActive];
+  List<Object?> get props => [jobOffer];
 }
 
 class DeleteJobOffer extends JobOfferEvent {
-  final String offerId;
-  const DeleteJobOffer(this.offerId);
+  final String jobId;
+  final String schoolId;
+
+  DeleteJobOffer({required this.jobId, required this.schoolId});
+
   @override
-  List<Object?> get props => [offerId];
+  List<Object?> get props => [jobId, schoolId];
 }

@@ -1,276 +1,401 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-import 'package:leloprof/features/job/domain/models/joboffer_model.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../../auth/presentation/bloc/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/bloc/auth_state.dart'; // Pour les liens externes
+import '../../domain/models/joboffer_model.dart';
 
-class JobOfferDetailPage extends StatelessWidget {
+class JobOfferDetailPage extends StatefulWidget {
   final JobOfferModel offer;
 
   const JobOfferDetailPage({super.key, required this.offer});
 
   @override
+  State<JobOfferDetailPage> createState() => _JobOfferDetailPageState();
+}
+
+class _JobOfferDetailPageState extends State<JobOfferDetailPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // final dateFormat = DateFormat('dd MMMM yyyy', 'fr_FR');
-    // final formattedDate = dateFormat.format(offer.date);
+    final offer = widget.offer;
     final theme = Theme.of(context);
-    final currentUser =
-        context.read<AuthBloc>().state is Authenticated
-            ? (context.read<AuthBloc>().state as Authenticated).user
-            : null;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(offer.title),
-        actions: [
-          if (currentUser?.role == 'ecole' && offer.schoolId == currentUser?.id)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () => context.push('/edit-offer', extra: offer),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: CircleAvatar(
+          backgroundColor: Colors.red.shade900,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.redAccent),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 12, right: 12),
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red.shade800,
+            elevation: 8,
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
             ),
+            shadowColor: Colors.grey,
+          ),
+          icon: const Icon(Icons.send_rounded, size: 22),
+          label: const Text(
+            'POSTULER',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              letterSpacing: 1.2,
+              color: Colors.grey,
+            ),
+          ),
+          onPressed: () {
+            // TODO: Ajouter action postuler
+          },
+        ),
+      ),
+      body: AnimatedBuilder(
+        animation: _fadeAnimation,
+        builder: (context, child) {
+          return Opacity(opacity: _fadeAnimation.value, child: child);
+        },
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    height: 180,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color.fromARGB(255, 203, 17, 17),
+                          Color.fromARGB(255, 250, 44, 44),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(32),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -40,
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.white,
+                      child: CircleAvatar(
+                        radius: 56,
+                        backgroundImage:
+                            offer.schoolLogoUrl != null
+                                ? NetworkImage(offer.schoolLogoUrl!)
+                                : null,
+                        child:
+                            offer.schoolLogoUrl == null
+                                ? const Icon(
+                                  Icons.school,
+                                  size: 60,
+                                  color: Colors.redAccent,
+                                )
+                                : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SliverPadding(padding: const EdgeInsets.only(top: 60)),
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    offer.schoolName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 24,
+                      color: Colors.redAccent,
+                      letterSpacing: 0.9,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${offer.schoolCity}, ${offer.schoolCountry}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+            ),
+            SliverList(
+              delegate: SliverChildListDelegate([
+                _buildInfoCard(
+                  title: 'DESCRIPTION',
+                  child: Text(
+                    offer.description,
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.4,
+                      color: Colors.grey[900],
+                    ),
+                  ),
+                ),
+                _buildInfoCard(
+                  title: 'DÉTAILS DU POSTE',
+                  child: Column(
+                    children: [
+                      _buildDetailRow(
+                        Icons.work_outline,
+                        'Type de contrat',
+                        offer.contractType.name,
+                      ),
+                      _buildDetailRow(
+                        Icons.school_outlined,
+                        'Niveau scolaire',
+                        offer.schoolLevel.name,
+                      ),
+                      if (offer.teachingDomain != null)
+                        _buildDetailRow(
+                          Icons.category_outlined,
+                          'Domaine',
+                          offer.teachingDomain!,
+                        ),
+                      if (offer.subjects != null)
+                        _buildDetailRow(
+                          Icons.book_outlined,
+                          'Matières',
+                          offer.subjects!,
+                        ),
+                      if (offer.monthlySalary != null)
+                        _buildDetailRow(
+                          Icons.euro_symbol_outlined,
+                          'Salaire',
+                          '${offer.monthlySalary} € / mois',
+                        ),
+                      if (offer.weeklyHours != null)
+                        _buildDetailRow(
+                          Icons.access_time_outlined,
+                          'Heures/semaine',
+                          '${offer.weeklyHours}h',
+                        ),
+                      if (offer.requiredGender != null)
+                        _buildDetailRow(
+                          Icons.person_outline,
+                          'Genre requis',
+                          offer.requiredGender!.name,
+                        ),
+                    ],
+                  ),
+                ),
+                _buildInfoCard(
+                  title: 'CONTACT',
+                  child: Column(
+                    children: [
+                      if (offer.contactEmail != null)
+                        _buildDetailRow(
+                          Icons.email_outlined,
+                          'Email',
+                          offer.contactEmail!,
+                        ),
+                      if (offer.contactPhone != null)
+                        _buildDetailRow(
+                          Icons.phone_outlined,
+                          'Téléphone',
+                          offer.contactPhone!,
+                        ),
+                    ],
+                  ),
+                ),
+                _buildInfoCard(
+                  title: 'EXIGENCES',
+                  child:
+                      offer.requirements.isNotEmpty
+                          ? Column(
+                            children:
+                                offer.requirements
+                                    .map(
+                                      (req) => ListTile(
+                                        dense: true,
+                                        leading: const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: Colors.green,
+                                        ),
+                                        title: Text(
+                                          req,
+                                          style: const TextStyle(fontSize: 15),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                          )
+                          : Text(
+                            'Aucune exigence spécifiée.',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                ),
+                _buildInfoCard(
+                  title: 'AVANTAGES',
+                  child:
+                      offer.benefits.isNotEmpty
+                          ? Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children:
+                                offer.benefits
+                                    .map(
+                                      (b) => Chip(
+                                        label: Text(
+                                          b,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.blue.shade50,
+                                        avatar: const Icon(
+                                          Icons.star,
+                                          color: Colors.blue,
+                                          size: 18,
+                                        ),
+                                        elevation: 2,
+                                        shadowColor: Colors.redAccent
+                                            .withOpacity(0.3),
+                                      ),
+                                    )
+                                    .toList(),
+                          )
+                          : Text(
+                            'Aucun avantage mentionné.',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                ),
+                _buildInfoCard(
+                  title: 'DATE LIMITE',
+                  child: Text(
+                    offer.applicationDeadline != null
+                        ? offer.applicationDeadline!.toLocal().toString().split(
+                          ' ',
+                        )[0]
+                        : 'Non spécifiée',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Colors.red.shade600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 100),
+              ]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({required String title, required Widget child}) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // En-tête avec logo école
-            _buildSchoolHeader(context),
-
-            // Section principale
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(offer.title, style: theme.textTheme.headlineSmall),
-                    const SizedBox(height: 8),
-                    _buildMetaInfoRow(),
-                    const SizedBox(height: 16),
-                    _buildDetailSection('Description', offer.description),
-                    if (offer.requirements.isNotEmpty)
-                      _buildDetailSection(
-                        'Compétences requises',
-                        offer.requirements.map((r) => '• $r').join('\n'),
-                      ),
-                    if (offer.benefits.isNotEmpty)
-                      _buildDetailSection(
-                        'Avantages',
-                        offer.benefits.map((b) => '• $b').join('\n'),
-                      ),
-                  ],
-                ),
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              letterSpacing: 1.4,
+              color: Colors.redAccent.shade700,
             ),
-
-            // Section contact
-            _buildContactSection(),
-
-            // Bouton d'action
-            if (currentUser?.role == 'enseignant') _buildApplyButton(context),
-          ],
-        ),
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
       ),
     );
   }
 
-  Widget _buildSchoolHeader(BuildContext context) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 30,
-          backgroundImage:
-              offer.schoolLogo != null ? NetworkImage(offer.schoolLogo!) : null,
-          child:
-              offer.schoolLogo == null
-                  ? Text(offer.schoolName.substring(0, 2))
-                  : null,
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              offer.schoolName,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            Text(
-              'Publié le ${DateFormat('dd/MM/yyyy').format(offer.date)}',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMetaInfoRow() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _buildMetaChip(Icons.work, offer.contractType),
-        _buildMetaChip(Icons.euro, '${offer.salary} €/mois'),
-        _buildMetaChip(Icons.location_on, offer.location),
-        _buildMetaChip(Icons.schedule, '${offer.hoursPerWeek}h/semaine'),
-      ],
-    );
-  }
-
-  Widget _buildMetaChip(IconData icon, String text) {
-    return Chip(
-      avatar: Icon(icon, size: 18),
-      label: Text(text),
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    );
-  }
-
-  Widget _buildDetailSection(String title, String content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 16),
-        Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        const SizedBox(height: 8),
-        Text(content),
-        const SizedBox(height: 8),
-        const Divider(),
-      ],
-    );
-  }
-
-  Widget _buildContactSection() {
-    return Card(
-      margin: const EdgeInsets.only(top: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Contact',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            const SizedBox(height: 8),
-            if (offer.contactEmail != null)
-              ListTile(
-                leading: const Icon(Icons.email),
-                title: const Text('Email'),
-                subtitle: Text(offer.contactEmail!),
-                onTap: () => _launchEmail(offer.contactEmail!),
-              ),
-            if (offer.contactPhone != null)
-              ListTile(
-                leading: const Icon(Icons.phone),
-                title: const Text('Téléphone'),
-                subtitle: Text(offer.contactPhone!),
-                onTap: () => _launchPhone(offer.contactPhone!),
-              ),
-            if (offer.website != null)
-              ListTile(
-                leading: const Icon(Icons.language),
-                title: const Text('Site web'),
-                subtitle: Text(offer.website!),
-                onTap: () => _launchUrl(offer.website!),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildApplyButton(BuildContext context) {
+  Widget _buildDetailRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(top: 24),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          icon: const Icon(Icons.send),
-          label: const Text('POSTULER MAINTENANT'),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          onPressed: () => _showApplyDialog(context),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _launchEmail(String email) async {
-    final uri = Uri.parse('mailto:$email');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
-  }
-
-  Future<void> _launchPhone(String phone) async {
-    final uri = Uri.parse('tel:$phone');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
-  }
-
-  Future<void> _launchUrl(String url) async {
-    if (!url.startsWith('http')) {
-      url = 'https://$url';
-    }
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
-  }
-
-  void _showApplyDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Postuler à cette offre'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Votre CV et lettre de motivation seront envoyés à :',
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  offer.schoolName,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                const Text('Confirmez-vous votre candidature ?'),
-              ],
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Colors.redAccent.shade700, size: 22),
+          const SizedBox(width: 14),
+          Expanded(
+            flex: 3,
+            child: Text(
+              '$label :',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Colors.blueGrey.shade900,
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('ANNULER'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Candidature envoyée avec succès !'),
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                },
-                child: const Text('CONFIRMER'),
-              ),
-            ],
           ),
+          Expanded(
+            flex: 5,
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

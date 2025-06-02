@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,9 @@ import 'package:leloprof/features/school/domain/models/school_model.dart';
 import 'package:leloprof/features/school/presentation/bloc/bloc/school_bloc.dart';
 import 'package:leloprof/features/school/presentation/bloc/bloc/school_event.dart';
 import 'package:leloprof/features/school/presentation/bloc/bloc/school_state.dart';
+import 'package:leloprof/utils/widgets/custom_dropdown_button.dart';
+
+import '../../../../utils/models/listes.dart';
 
 class SchoolSetupPage extends StatefulWidget {
   final UserModel initialUser;
@@ -33,6 +38,7 @@ class _SchoolSetupPageState extends State<SchoolSetupPage> {
   final Set<String> _selectedSchoolTypes = {};
   final Set<String> _selectedEducationCycles = {};
   String? _selectedYearOfEstablishment;
+  String? _selectedIsPublic;
 
   @override
   void initState() {
@@ -90,10 +96,8 @@ class _SchoolSetupPageState extends State<SchoolSetupPage> {
       department: _departmentController.text.trim(),
       country: _countryController.text.trim(),
       primaryPhone: _primaryPhoneController.text.trim(),
-      isActive: true,
       isVerified: false,
       createdAt: DateTime.now(),
-      creationSource: 'app_setup',
       yearOfEstablishment:
           _selectedYearOfEstablishment != null
               ? int.parse(_selectedYearOfEstablishment!)
@@ -102,10 +106,10 @@ class _SchoolSetupPageState extends State<SchoolSetupPage> {
       types: _selectedSchoolTypes.toList(),
       educationCycle: _selectedEducationCycles.toList(),
       secondaryPhone: null,
-      emergencyPhone: null,
       schoolCreationDate: null,
       ratings: null,
       bio: null,
+      isPublic: false,
     );
 
     context.read<SchoolBloc>().add(CreateSchool(schoolData));
@@ -200,6 +204,33 @@ class _SchoolSetupPageState extends State<SchoolSetupPage> {
               children: [
                 const Text(
                   'Type d\'établissement*',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField(
+                  items:
+                      ["Public", "Privé"]
+                          .map(
+                            (e) => DropdownMenuItem(value: e, child: Text(e)),
+                          )
+                          .toList(),
+                  onChanged: (value) {
+                    value = value;
+                  },
+                ),
+                CustomDropdownButton(
+                  title: " 'Type d'établissement*'",
+                  listes: ListesApp.isPublicListes,
+                  selectedItem: _selectedIsPublic,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedIsPublic = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Type d\'e cycle d\'éducation*',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),

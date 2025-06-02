@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:leloprof/features/school/domain/models/school_model.dart';
+import 'package:leloprof/features/school/presentation/bloc/bloc/school_event.dart';
 
-import '../../../school/presentation/bloc/bloc/school_bloc.dart';
-import '../../../school/presentation/bloc/bloc/school_event.dart';
-import '../../../school/presentation/bloc/bloc/school_state.dart';
+import '../bloc/bloc/school_bloc.dart';
 
 class SchoolEditPage extends StatefulWidget {
   final SchoolModel school;
@@ -21,44 +20,47 @@ class SchoolEditPage extends StatefulWidget {
 class _SchoolEditPageState extends State<SchoolEditPage> {
   final _formKey = GlobalKey<FormState>();
   File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
 
-  late TextEditingController _nameController;
-  late TextEditingController _townController;
-  late TextEditingController _emailController;
-  late TextEditingController _phoneNumberController;
-  late TextEditingController _departmentController;
-  late TextEditingController _yearOfEstablishmentController;
-  late TextEditingController _bioController;
+  late final TextEditingController _nameController;
+  late final TextEditingController _townController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _phoneNumberController;
+  late final TextEditingController _departmentController;
+  late final TextEditingController _yearController;
+  late final TextEditingController _bioController;
 
   late List<String> _types;
   late List<String> _educationCycles;
-
-  bool _enable = true;
-  bool _isPay = false;
-  bool _isPremium = false;
+  late bool _isEnabled;
+  late bool _isVerified;
+  late bool _hasPaid;
 
   @override
   void initState() {
     super.initState();
+    _initializeControllers();
+    _types = List.from(widget.school.types);
+    _educationCycles = List.from(widget.school.educationCycle);
+    _isEnabled = widget.school.isEnabled;
+    _isVerified = widget.school.isVerified;
+    _hasPaid = widget.school.hasPaid;
+  }
+
+  void _initializeControllers() {
     _nameController = TextEditingController(text: widget.school.name);
     _townController = TextEditingController(text: widget.school.town);
-    _emailController = TextEditingController(text: widget.school.email ?? '');
+    _emailController = TextEditingController(text: widget.school.email);
     _phoneNumberController = TextEditingController(
-      text: widget.school.secondaryPhone,
+      text: widget.school.primaryPhone,
     );
     _departmentController = TextEditingController(
       text: widget.school.department,
     );
-    _yearOfEstablishmentController = TextEditingController(
+    _yearController = TextEditingController(
       text: widget.school.yearOfEstablishment.toString(),
     );
     _bioController = TextEditingController(text: widget.school.bio ?? '');
-
-    _types = List<String>.from(widget.school.types);
-    _educationCycles = List<String>.from(widget.school.educationCycle);
-    _enable = widget.school.isActive;
-    _isPay = widget.school.isVerified;
-    _isPremium = widget.school.isActive;
   }
 
   @override
@@ -68,77 +70,346 @@ class _SchoolEditPageState extends State<SchoolEditPage> {
     _emailController.dispose();
     _phoneNumberController.dispose();
     _departmentController.dispose();
-    _yearOfEstablishmentController.dispose();
+    _yearController.dispose();
     _bioController.dispose();
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() => _selectedImage = File(pickedFile.path));
+    }
+  }
+
+  void _saveChanges() {
     if (_formKey.currentState?.validate() ?? false) {
       final updatedSchool = widget.school.copyWith(
         name: _nameController.text.trim(),
         town: _townController.text.trim(),
         email: _emailController.text.trim(),
-        // phoneNumber: _phoneNumberController.text.trim(),
+        primaryPhone: _phoneNumberController.text.trim(),
         department: _departmentController.text.trim(),
-        yearOfEstablishment:
-            int.tryParse(_yearOfEstablishmentController.text.trim()) ?? 2000,
+        yearOfEstablishment: int.tryParse(_yearController.text.trim()) ?? 2000,
         bio: _bioController.text.trim(),
         types: _types,
         educationCycle: _educationCycles,
-        // enable: _enable,
-        // isPay: _isPay,
-        // isPremium: _isPremium,
+        isEnabled: _isEnabled,
+        isVerified: _isVerified,
+        hasPaid: _hasPaid,
+        profileImageUrl: _selectedImage != null ? _selectedImage!.path : null,
       );
 
+      // Envoyer l'événement de mise à jour
       context.read<SchoolBloc>().add(UpdateSchool(updatedSchool));
       Navigator.pop(context);
     }
   }
 
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label, {
-    TextInputType keyboardType = TextInputType.text,
-    IconData? icon,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: (val) {
-        if (val == null || val.trim().isEmpty) return 'Ce champ est requis';
-        if (keyboardType == TextInputType.number &&
-            int.tryParse(val.trim()) == null) {
-          return 'Entrez un nombre valide';
-        }
-        return null;
-      },
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: icon != null ? Icon(icon) : null,
-        filled: true,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Modifier l\'école'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: _saveChanges,
+            tooltip: 'Enregistrer',
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              // Section Photo de profil
+              _buildProfileSection(theme),
+              const SizedBox(height: 24),
+
+              // Section Informations de base
+              _buildBasicInfoSection(colors),
+              const SizedBox(height: 20),
+
+              // Section À propos
+              _buildAboutSection(),
+              const SizedBox(height: 20),
+
+              // Section Types et Cycles
+              _buildTagsSection(),
+              const SizedBox(height: 20),
+
+              // Section Paramètres
+              _buildSettingsSection(colors),
+              const SizedBox(height: 30),
+
+              // Bouton de sauvegarde
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _saveChanges,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Enregistrer les modifications'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildEditableChipsList(List<String> list) {
-    final controller = TextEditingController();
+  Widget _buildProfileSection(ThemeData theme) {
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            Hero(
+              tag: 'school-avatar-${widget.school.id}',
+              child: CircleAvatar(
+                radius: 60,
+                backgroundColor: theme.cardColor,
+                backgroundImage: _getProfileImage(),
+                child:
+                    _selectedImage == null &&
+                            widget.school.profileImageUrl == null
+                        ? const Icon(Icons.school, size: 40)
+                        : null,
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: theme.scaffoldBackgroundColor,
+                  width: 2,
+                ),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.camera_alt, size: 20),
+                color: theme.colorScheme.onPrimary,
+                onPressed: _pickImage,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Changer la photo',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+      ],
+    );
+  }
 
+  ImageProvider? _getProfileImage() {
+    if (_selectedImage != null) return FileImage(_selectedImage!);
+    if (widget.school.profileImageUrl != null) {
+      return NetworkImage(widget.school.profileImageUrl!);
+    }
+    return null;
+  }
+
+  Widget _buildBasicInfoSection(ColorScheme colors) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildTextField(_nameController, 'Nom de l\'école', Icons.school),
+            const SizedBox(height: 12),
+            _buildTextField(_townController, 'Ville', Icons.location_city),
+            const SizedBox(height: 12),
+            _buildTextField(
+              _emailController,
+              'Email',
+              Icons.email,
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 12),
+            _buildTextField(
+              _phoneNumberController,
+              'Téléphone',
+              Icons.phone,
+              keyboardType: TextInputType.phone,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAboutSection() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'À propos',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            _buildTextField(_departmentController, 'Département', Icons.map),
+            const SizedBox(height: 12),
+            _buildTextField(
+              _yearController,
+              'Année de création',
+              Icons.calendar_today,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _bioController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: 'Description',
+                prefixIcon: const Icon(Icons.info_outline),
+                border: const OutlineInputBorder(),
+                alignLabelWithHint: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTagsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 8,
-          children:
-              list
-                  .map(
-                    (item) => Chip(
-                      label: Text(item),
-                      onDeleted: () => setState(() => list.remove(item)),
-                    ),
-                  )
-                  .toList(),
+        _buildChipsInput(
+          label: 'Types d\'établissement',
+          items: _types,
+          icon: Icons.category,
+        ),
+        const SizedBox(height: 16),
+        _buildChipsInput(
+          label: 'Cycles éducatifs',
+          items: _educationCycles,
+          icon: Icons.school,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsSection(ColorScheme colors) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            _buildSwitchTile(
+              'Activée',
+              _isEnabled,
+              (v) => setState(() => _isEnabled = v),
+            ),
+            _buildDivider(),
+            _buildSwitchTile(
+              'Vérifiée',
+              _isVerified,
+              (v) => setState(() => _isVerified = v),
+            ),
+            _buildDivider(),
+            _buildSwitchTile(
+              'Abonnement premium',
+              _hasPaid,
+              (v) => setState(() => _hasPaid = v),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+      ),
+      keyboardType: keyboardType,
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'Ce champ est requis';
+        if (keyboardType == TextInputType.number &&
+            int.tryParse(value) == null) {
+          return 'Veuillez entrer un nombre valide';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildChipsInput({
+    required String label,
+    required List<String> items,
+    required IconData icon,
+  }) {
+    final controller = TextEditingController();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InputDecorator(
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon: Icon(icon),
+            border: const OutlineInputBorder(),
+          ),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children:
+                items
+                    .map(
+                      (item) => Chip(
+                        label: Text(item),
+                        deleteIcon: const Icon(Icons.close, size: 18),
+                        onDeleted: () => setState(() => items.remove(item)),
+                      ),
+                    )
+                    .toList(),
+          ),
         ),
         const SizedBox(height: 8),
         Row(
@@ -146,18 +417,17 @@ class _SchoolEditPageState extends State<SchoolEditPage> {
             Expanded(
               child: TextField(
                 controller: controller,
-                decoration: InputDecoration(
-                  labelText: 'Ajouter un élément',
-                  border: OutlineInputBorder(),
+                decoration: const InputDecoration(
+                  hintText: 'Ajouter un élément',
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12),
                 ),
               ),
             ),
             IconButton(
-              icon: Icon(Icons.add),
+              icon: const Icon(Icons.add),
               onPressed: () {
-                final text = controller.text.trim();
-                if (text.isNotEmpty) {
-                  setState(() => list.add(text));
+                if (controller.text.trim().isNotEmpty) {
+                  setState(() => items.add(controller.text.trim()));
                   controller.clear();
                 }
               },
@@ -168,156 +438,23 @@ class _SchoolEditPageState extends State<SchoolEditPage> {
     );
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-    }
-  }
-
-  Widget _buildImagePicker() {
-    return Container(
-      height: 150,
-      width: 100,
-      color: Colors.amber,
-      child: Center(
-        child: Stack(
-          children: [
-            CircleAvatar(
-              radius: 60,
-              backgroundImage:
-                  _selectedImage != null
-                      ? FileImage(_selectedImage!)
-                      : (widget.school.profileImageUrl != null
-                          ? NetworkImage(widget.school.profileImageUrl!)
-                          : AssetImage('assets/images/default_school.png')
-                              as ImageProvider),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: InkWell(
-                onTap: _pickImage,
-                child: CircleAvatar(
-                  backgroundColor: Colors.blue,
-                  radius: 20,
-                  child: Icon(Icons.camera_alt, color: Colors.white),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+  Widget _buildSwitchTile(
+    String title,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
+    return SwitchListTile(
+      title: Text(title),
+      value: value,
+      onChanged: onChanged,
+      contentPadding: EdgeInsets.zero,
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Modifier École')),
-      body: BlocListener<SchoolBloc, SchoolState>(
-        listener: (context, state) {
-          if (state is SchoolLoaded) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('École mise à jour avec succès')),
-            );
-          } else if (state is SchoolError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Erreur lors de la mise à jour')),
-            );
-          }
-        },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                _buildImagePicker(),
-                const SizedBox(height: 15),
-
-                _buildTextField(
-                  _nameController,
-                  'Nom de l\'école',
-                  icon: Icons.school,
-                ),
-                const SizedBox(height: 15),
-                _buildTextField(
-                  _townController,
-                  'Ville',
-                  icon: Icons.location_city,
-                ),
-                const SizedBox(height: 15),
-                _buildTextField(
-                  _emailController,
-                  'Email',
-                  keyboardType: TextInputType.emailAddress,
-                  icon: Icons.email,
-                ),
-                const SizedBox(height: 15),
-                _buildTextField(
-                  _phoneNumberController,
-                  'Téléphone',
-                  keyboardType: TextInputType.phone,
-                  icon: Icons.phone,
-                ),
-                const SizedBox(height: 15),
-                _buildTextField(
-                  _departmentController,
-                  'Département',
-                  icon: Icons.map,
-                ),
-                const SizedBox(height: 15),
-                _buildTextField(
-                  _yearOfEstablishmentController,
-                  'Année de création',
-                  keyboardType: TextInputType.number,
-                  icon: Icons.calendar_today,
-                ),
-                const SizedBox(height: 15),
-                _buildTextField(
-                  _bioController,
-                  'Biographie',
-                  icon: Icons.info_outline,
-                ),
-
-                const SizedBox(height: 25),
-                _buildEditableChipsList(_types),
-                const SizedBox(height: 25),
-                _buildEditableChipsList(_educationCycles),
-
-                const SizedBox(height: 20),
-                SwitchListTile(
-                  title: Text('Activée'),
-                  value: _enable,
-                  onChanged: (val) => setState(() => _enable = val),
-                ),
-                SwitchListTile(
-                  title: Text('École payante'),
-                  value: _isPay,
-                  onChanged: (val) => setState(() => _isPay = val),
-                ),
-                SwitchListTile(
-                  title: Text('Premium'),
-                  value: _isPremium,
-                  onChanged: (val) => setState(() => _isPremium = val),
-                ),
-
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _save,
-                  icon: Icon(Icons.save),
-                  label: Text('Enregistrer'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+  Widget _buildDivider() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Divider(height: 1),
     );
   }
 }

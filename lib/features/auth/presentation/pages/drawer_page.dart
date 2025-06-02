@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_bloc.dart';
-import 'package:leloprof/features/auth/presentation/pages/auth_wrapper.dart';
-import 'package:leloprof/features/auth/presentation/pages/home_page.dart';
-import 'package:leloprof/features/auth/presentation/pages/widgets/title_drawer.dart';
-
 import '../../domain/entities/user_model.dart';
 import '../bloc/bloc/auth_event.dart';
 import '../bloc/bloc/auth_state.dart';
@@ -23,11 +19,12 @@ class DrawerPage extends StatelessWidget {
         }
 
         return Drawer(
-          backgroundColor: Theme.of(context).colorScheme.onPrimary,
+          backgroundColor: Theme.of(context).colorScheme.background,
           child: SafeArea(
             child: Column(
               children: [
                 _buildUserHeader(context, user),
+                const Divider(height: 1),
                 _buildMenuItems(context, user),
               ],
             ),
@@ -43,93 +40,86 @@ class DrawerPage extends StatelessWidget {
         user?.name ?? 'Utilisateur',
         style: TextStyle(
           fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.tertiary,
+          color: Theme.of(context).colorScheme.onPrimary,
         ),
       ),
       accountEmail: Text(
         user?.email ?? '',
         style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.tertiary,
+          fontWeight: FontWeight.w400,
+          color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
         ),
       ),
       currentAccountPicture: CircleAvatar(
-        backgroundColor: Colors.grey[300],
-        // Essayer de charger l'image de profil si l'URL est disponible
-        // Note: UserModel n'a pas de champ profileImageUrl directement,
-        // mais TeacherModel et SchoolModel en ont.
-        // Pour une solution générique, il faudrait ajouter profileImageUrl à UserModel
-        // ou caster l'utilisateur vers son type spécifique si possible.
-        // Pour l'instant, on met un placeholder.
-        // backgroundImage: user?.profileImageUrl != null && user!.profileImageUrl!.isNotEmpty
-        //     ? NetworkImage(user.profileImageUrl!)
-        //     : null,
-        child: /* user?.profileImageUrl == null || user!.profileImageUrl!.isEmpty ? */
-            const Icon(
-              Icons.person,
-              size: 40,
-              color: Colors.white,
-            ) /* : null */,
+        backgroundColor: Colors.grey.shade300,
+        child: const Icon(Icons.person, size: 48, color: Colors.white),
       ),
-      decoration: const BoxDecoration(
-        image: DecorationImage(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary,
+        image: const DecorationImage(
           image: AssetImage('assets/logos/leloprof.png'),
           fit: BoxFit.contain,
-          opacity: 0.05,
+          opacity: 0.1,
         ),
       ),
     );
   }
 
   Widget _buildMenuItems(BuildContext context, UserModel? user) {
+    final style = TextStyle(
+      fontSize: 16,
+      color: Theme.of(context).colorScheme.onBackground,
+    );
+
     return Expanded(
-      child: Column(
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
-          TitleDrawer(
-            title: "Passer à Pro",
-            iconData: Icons.verified_sharp,
+          _buildMenuTile(
+            context,
+            icon: Icons.verified_sharp,
+            label: "Passer à Pro",
             onTap: () {
-              Navigator.pop(context); // Fermer le drawer
-              // Naviguer vers la page Pro (à créer)
-              // context.go('/pro-features');
+              Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Page Pro à implémenter')),
               );
             },
           ),
-          TitleDrawer(
-            title: 'Offres',
-            iconData: Icons.work,
+          _buildMenuTile(
+            context,
+            icon: Icons.work,
+            label: 'Offres',
             onTap: () {
               Navigator.pop(context);
-              // Assurez-vous que HomePage gère l'affichage des offres
-              // ou naviguez vers une page spécifique des offres
-              context.go('/home', extra: {'initialTabIndex': 0}); // Exemple
+              context.go('/home', extra: {'initialTabIndex': 0});
             },
           ),
-          TitleDrawer(
-            title: 'Écoles',
-            iconData: Icons.school,
+          _buildMenuTile(
+            context,
+            icon: Icons.school,
+            label: 'Écoles',
             onTap: () {
               Navigator.pop(context);
-              context.go('/home', extra: {'initialTabIndex': 1}); // Exemple
+              context.go('/home', extra: {'initialTabIndex': 1});
             },
           ),
-          TitleDrawer(
-            title: 'Enseignants',
-            iconData: Icons.person,
+          _buildMenuTile(
+            context,
+            icon: Icons.person,
+            label: 'Enseignants',
             onTap: () {
               Navigator.pop(context);
-              context.go('/home', extra: {'initialTabIndex': 2}); // Exemple
+              context.go('/home', extra: {'initialTabIndex': 2});
             },
           ),
           const Divider(),
-          TitleDrawer(
-            title: "Partager l'application",
-            iconData: Icons.share,
+          _buildMenuTile(
+            context,
+            icon: Icons.share,
+            label: "Partager l'application",
             onTap: () {
               Navigator.pop(context);
-              // Implémenter la logique de partage
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Fonction de partage à implémenter'),
@@ -137,12 +127,12 @@ class DrawerPage extends StatelessWidget {
               );
             },
           ),
-          TitleDrawer(
-            title: "Noter Application",
-            iconData: Icons.mark_chat_read_rounded,
+          _buildMenuTile(
+            context,
+            icon: Icons.star_rate,
+            label: "Noter l'application",
             onTap: () {
               Navigator.pop(context);
-              // Implémenter la logique de notation (ex: package in_app_review)
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Fonction de notation à implémenter'),
@@ -150,34 +140,102 @@ class DrawerPage extends StatelessWidget {
               );
             },
           ),
-          const Spacer(),
-          TitleDrawer(
-            title: "Paramètres",
-            iconData: Icons.settings,
+          const Divider(),
+          _buildMenuTile(
+            context,
+            icon: Icons.feedback_outlined,
+            label: 'Suggestions / Commentaires',
+            onTap: () {
+              // Navigator.pop(context); // Ferme le drawer
+              context.pushNamed('suggestion');
+            },
+          ),
+          const SizedBox(height: 20),
+          const Divider(),
+          _buildMenuTile(
+            context,
+            icon: Icons.settings,
+            label: "Paramètres",
             onTap: () {
               Navigator.pop(context);
               context.go('/settings');
             },
           ),
-          TitleDrawer(
-            title: "Déconnexion",
-            iconData: Icons.logout,
-            onTap: () => _logout(context),
+          const SizedBox(height: 20),
+          _buildMenuTile(
+            context,
+            icon: Icons.logout,
+            label: "Déconnexion",
+            iconColor: Colors.red,
+            labelColor: Colors.red,
+            onTap: () => _confirmLogout(context),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildMenuTile(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? iconColor,
+    Color? labelColor,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: iconColor ?? Theme.of(context).colorScheme.primary,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: labelColor ?? Theme.of(context).colorScheme.onBackground,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      hoverColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+      onTap: onTap,
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Déconnexion'),
+            content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  _logout(context);
+                },
+                child: const Text('Déconnexion'),
+              ),
+            ],
+          ),
+    );
+  }
+
   void _logout(BuildContext context) async {
-    Navigator.pop(context); // Fermer le drawer d'abord
-    // Émettre l'événement de déconnexion
+    Navigator.pop(context); // Fermer le drawer
     context.read<AuthBloc>().add(SignOutRequested());
 
-    // Attendre un court instant pour permettre au BLoC de traiter l'événement
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    // Naviguer vers la page d'accueil avec remplacement pour éviter de revenir en arrière
-    context.go('/');
+    // Écouter le changement d'état et naviguer quand déconnecté
+    final bloc = context.read<AuthBloc>();
+    await for (final state in bloc.stream) {
+      if (state is Unauthenticated) {
+        context.go('/');
+        break;
+      }
+    }
   }
 }

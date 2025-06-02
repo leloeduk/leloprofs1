@@ -4,19 +4,21 @@ import 'package:go_router/go_router.dart';
 import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:leloprof/features/auth/presentation/pages/role_selection_page.dart';
 import 'package:leloprof/features/auth/domain/entities/user_model.dart'; // Ajout pour UserModel
+import 'package:leloprof/features/auth/presentation/pages/suggestion_page.dart';
 import 'package:leloprof/features/job/domain/models/joboffer_model.dart';
+import 'package:leloprof/features/job/presentation/pages/create_job_offer.dart';
 import 'package:leloprof/features/job/presentation/pages/joboffer_edit_page.dart';
 import 'package:leloprof/features/school/domain/models/school_model.dart';
 import 'package:leloprof/features/teacher/domain/models/teacher_model.dart';
-
+import 'package:leloprof/features/teacher/presentation/pages/teacher_search_page.dart';
 import '../features/auth/presentation/pages/auth_wrapper.dart';
 import '../features/auth/presentation/pages/home_page.dart';
 import '../features/auth/presentation/pages/singup_page.dart';
 import '../features/auth/presentation/pages/terms_condition_page.dart';
+import '../features/job/presentation/bloc/bloc/joboffer_event.dart';
 import '../features/job/presentation/pages/joboffer_detail_page.dart.dart';
 import '../features/school/presentation/pages/school_detail_page.dart';
 import '../features/school/presentation/pages/school_edit_page.dart';
-// Importer les nouvelles pages de configuration (vous devrez créer ces fichiers)
 import '../features/settings/presentation/settings_page.dart';
 import '../features/teacher/presentation/pages/teacher_setup_page.dart';
 import '../features/teacher/presentation/pages/teacher_detail_page.dart';
@@ -128,26 +130,74 @@ final GoRouter appRouter = GoRouter(
         return SchoolSetupPage(initialUser: user);
       },
     ),
+
+    // GoRoute(
+    //   name: 'create-offer', // ou 'edit-offer'
+    //   path: '/job-offer/edit',
+    //   builder: (context, state) {
+    //     // Récupérer l'objet JobOfferModel passé en extra
+    //     final JobOfferModel? offer = state.extra as JobOfferModel?;
+    //     if (offer == null) {
+    //       // Cas où aucun job offer n’est fourni -> on peut renvoyer une erreur ou un widget vide
+    //       return Scaffold(
+    //         body: Center(child: Text('Offre d’emploi non trouvée')),
+    //       );
+    //     }
+    //     // Afficher la page d’édition/création avec l’offre reçue
+    //     return JobOfferEditPage(offer: offer, school: SchoolModel());
+    //   },
+    // ),
     GoRoute(
-      path: '/edit-offer',
-      name: 'edit-offer',
+      path: '/edit-job-offer',
+      name: 'editJobOffer',
       builder: (context, state) {
-        final offer = state.extra as JobOfferModel;
-        return JobofferEditPage(offer: offer); // À implémenter
+        final extra = state.extra as Map<String, dynamic>;
+        final offer = extra['offer'] as JobOfferModel;
+        final school = extra['school'] as SchoolModel;
+
+        return JobOfferEditPage(offer: offer, school: school);
       },
     ),
+
     GoRoute(
-      path: '/offer-details',
+      path: '/offer-details/id',
       name: 'offer-details',
       builder: (context, state) {
         final offer = state.extra as JobOfferModel;
         return JobOfferDetailPage(offer: offer);
       },
     ),
+    // GoRoute(
+    //   path: '/offer-details',
+    //   name: 'offer-details',
+    //   builder: (context, state) {
+    //     final offer = state.extra as JobOfferModel;
+    //     return JobOfferDetailPage(offer: offer);
+    //   },
+    // ),
+
+    // GoRoute(
+    //   name: 'create-offer',
+    //   path: '/create-offer',
+    //   builder: (context, state) {
+    //     final offer = state.extra as JobOfferModel;
+    //     return CreateJobOfferPage(offer: offer);
+    //   },
+    // ),
     GoRoute(
       path: '/settings',
       name: 'settings',
       builder: (context, state) => const SettingsPage(),
+    ),
+    GoRoute(
+      path: '/search-teachers',
+      name: 'search-teachers',
+      builder: (context, state) => const TeacherSearchPage(allTeachers: []),
+    ),
+    GoRoute(
+      path: '/suggestion',
+      name: 'suggestion',
+      builder: (context, state) => const SuggestionPage(),
     ),
   ],
 );

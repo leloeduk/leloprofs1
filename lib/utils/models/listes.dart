@@ -34,4 +34,5 @@ class ListesApp {
     'Autres',
   ];
   static final genders = ["homme", "femme"];
+  static final isPublicListes = ["Public", "Privé"];
 }
