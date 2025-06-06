@@ -35,10 +35,18 @@ class UpdateJobOffer extends JobOfferEvent {
 
 class DeleteJobOffer extends JobOfferEvent {
   final String jobId;
-  final String schoolId;
 
-  DeleteJobOffer({required this.jobId, required this.schoolId});
+  DeleteJobOffer({required this.jobId});
 
   @override
-  List<Object?> get props => [jobId, schoolId];
+  List<Object?> get props => [jobId];
+}
+
+class ApplyForJob extends JobOfferEvent {
+  final String jobOfferId;
+
+  ApplyForJob({required this.jobOfferId});
+
+  @override
+  List<Object> get props => [jobOfferId];
 }

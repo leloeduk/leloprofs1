@@ -160,30 +160,18 @@ final GoRouter appRouter = GoRouter(
     ),
 
     GoRoute(
-      path: '/offer-details/id',
+      path: '/offer-details', // Chemin simplifié
       name: 'offer-details',
       builder: (context, state) {
         final offer = state.extra as JobOfferModel;
-        return JobOfferDetailPage(offer: offer);
+
+        return JobOfferDetailPage(
+          offer: offer,
+
+          // Valeur par défaut à false
+        );
       },
     ),
-    // GoRoute(
-    //   path: '/offer-details',
-    //   name: 'offer-details',
-    //   builder: (context, state) {
-    //     final offer = state.extra as JobOfferModel;
-    //     return JobOfferDetailPage(offer: offer);
-    //   },
-    // ),
-
-    // GoRoute(
-    //   name: 'create-offer',
-    //   path: '/create-offer',
-    //   builder: (context, state) {
-    //     final offer = state.extra as JobOfferModel;
-    //     return CreateJobOfferPage(offer: offer);
-    //   },
-    // ),
     GoRoute(
       path: '/settings',
       name: 'settings',
@@ -192,7 +180,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/search-teachers',
       name: 'search-teachers',
-      builder: (context, state) => const TeacherSearchPage(allTeachers: []),
+      builder: (context, state) => const TeacherSearchPage(),
     ),
     GoRoute(
       path: '/suggestion',

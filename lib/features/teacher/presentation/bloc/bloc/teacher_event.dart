@@ -46,3 +46,27 @@ class UpdateTeacherPlan extends TeacherEvent {
 }
 
 class CheckConnection extends TeacherEvent {}
+
+class SearchTeachers extends TeacherEvent {
+  final String? name;
+  final String? department;
+  final String? country;
+  final String? district;
+  final List<String>? subjects;
+  final List<String>? languages;
+  final bool? isAvailable;
+  final bool? isCivilServant;
+  final bool? isInspector;
+
+  SearchTeachers({
+    this.name,
+    this.department,
+    this.country,
+    this.district,
+    this.subjects,
+    this.languages,
+    this.isAvailable,
+    this.isCivilServant,
+    this.isInspector,
+  });
+}

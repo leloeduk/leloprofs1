@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ReusableImagePicker extends StatefulWidget {
-  final File? initialImageFile;
-  final String? imageUrl;
-  final ValueChanged<File>? onImageSelected;
+  final File? initialImageFile; // Image locale initiale
+  final String? imageUrl; // URL distante (Firebase ou autre)
+  final ValueChanged<File>? onImageSelected; // Callback vers le parent
 
   const ReusableImagePicker({
     super.key,
@@ -37,9 +37,8 @@ class _ReusableImagePickerState extends State<ReusableImagePicker> {
         _selectedImage = file;
       });
 
-      if (widget.onImageSelected != null) {
-        widget.onImageSelected!(file); // Callback vers le parent
-      }
+      // Notifie le parent du changement d’image
+      widget.onImageSelected?.call(file);
     }
   }
 
@@ -65,8 +64,8 @@ class _ReusableImagePickerState extends State<ReusableImagePicker> {
             child: InkWell(
               onTap: _pickImage,
               child: CircleAvatar(
-                backgroundColor: Colors.grey,
-                radius: 20,
+                backgroundColor: Colors.grey[200],
+                radius: 22,
                 child: Icon(
                   Icons.camera_alt,
                   color: Theme.of(context).primaryColor,

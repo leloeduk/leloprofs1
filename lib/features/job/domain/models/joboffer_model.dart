@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 enum ContractType { fullTime, partTime, temporary, internship }
@@ -77,13 +78,22 @@ class JobOfferModel extends Equatable {
   factory JobOfferModel.fromJson(Map<String, dynamic> json) {
     return JobOfferModel(
       jobId: json['jobId'] ?? '',
-      creationDate: DateTime.parse(json['creationDate']),
+      creationDate:
+          (json['creationDate'] is Timestamp)
+              ? (json['creationDate'] as Timestamp).toDate()
+              : DateTime.parse(
+                json['creationDate'] ?? DateTime.now().toIso8601String(),
+              ),
       expirationDate:
-          json['expirationDate'] != null
+          (json['expirationDate'] is Timestamp)
+              ? (json['expirationDate'] as Timestamp).toDate()
+              : json['expirationDate'] != null
               ? DateTime.parse(json['expirationDate'])
               : null,
       applicationDeadline:
-          json['applicationDeadline'] != null
+          (json['applicationDeadline'] is Timestamp)
+              ? (json['applicationDeadline'] as Timestamp).toDate()
+              : json['applicationDeadline'] != null
               ? DateTime.parse(json['applicationDeadline'])
               : null,
       schoolId: json['schoolId'] ?? '',

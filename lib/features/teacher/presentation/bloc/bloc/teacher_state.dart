@@ -32,3 +32,12 @@ class ConnectionFailure extends TeacherState {
   final String message;
   ConnectionFailure(this.message);
 }
+
+class TeacherSearchLoaded extends TeacherState {
+  final List<TeacherModel> teachers;
+
+  TeacherSearchLoaded(this.teachers);
+
+  @override
+  List<Object> get props => [teachers];
+}

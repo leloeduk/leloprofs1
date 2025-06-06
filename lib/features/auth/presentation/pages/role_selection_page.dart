@@ -24,27 +24,53 @@ class RoleSelectionPage extends StatelessWidget {
           barrierDismissible: true,
           builder:
               (context) => AlertDialog(
-                title: Text('Confirmer le rôle ${roleNames[role]}'),
+                title: Center(
+                  child: Text(
+                    'Confirmer le rôle ${roleNames[role]}',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.tertiary,
+                    ),
+                  ),
+                ),
                 content: Text(
                   role == 'visitor'
                       ? 'Vous aurez un accès limité en tant que visiteur. Confirmez-vous ce choix ?'
                       : 'Vous avez choisi "${roleNames[role]}". Cette action est irréversible. Confirmez-vous ?',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text(
-                      'Annuler',
-                      style: TextStyle(color: Colors.red),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context, true);
+                        },
+                        child: Text(
+                          'Annuler',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context, true);
+                        },
+                        child: Text(
+                          'Confirmer',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text(
-                      'Confirmer',
-                      style: TextStyle(color: Colors.green),
-                    ),
-                  ),
+                  const SizedBox(height: 10),
                 ],
               ),
         ) ??
@@ -85,6 +111,41 @@ class RoleSelectionPage extends StatelessWidget {
         ),
       );
     }
+  }
+
+  Widget _buildRoleButton(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    required Color color,
+    required String role,
+    required String route,
+    bool isOutlined = false,
+  }) {
+    final backgroundColor = isOutlined ? Colors.white : color;
+    final foregroundColor = isOutlined ? color : Colors.white;
+    final border =
+        isOutlined ? BorderSide(color: color, width: 1.5) : BorderSide.none;
+
+    return SizedBox(
+      width: double.infinity,
+      height: 55,
+      child: OutlinedButton.icon(
+        icon: Icon(icon, size: 24, color: foregroundColor),
+        label: Text(
+          text,
+          style: TextStyle(fontSize: 16, color: foregroundColor),
+        ),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          side: border,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: () => _handleRoleSelection(context, role, route),
+      ),
+    );
   }
 
   @override
@@ -132,90 +193,70 @@ class RoleSelectionPage extends StatelessWidget {
 
           return Scaffold(
             body: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      "assets/logos/leloprof.png",
-                      width: 300,
-                      height: 150,
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 48,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "Quel est votre rôle ?",
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 40),
-                    // Bouton Enseignant
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.person, size: 30),
-                      label: const Text(
-                        "Je suis un enseignant",
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 55),
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          "assets/logos/leloprof.png",
+                          width: 220,
+                          height: 100,
                         ),
-                      ),
-                      onPressed:
-                          () => _handleRoleSelection(
+                        const SizedBox(height: 30),
+                        Text(
+                          "Choisissez votre rôle",
+                          style: Theme.of(
                             context,
-                            'teacher',
-                            '/teacher-setup',
+                          ).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red.shade300,
                           ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Bouton École
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.school, size: 30),
-                      label: const Text(
-                        "Je représente une école",
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 55),
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                      onPressed:
-                          () => _handleRoleSelection(
-                            context,
-                            'school',
-                            '/school-setup',
-                          ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Bouton Visiteur
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.visibility, size: 30),
-                      label: const Text(
-                        "Je suis un visiteur",
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 55),
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Vous pouvez être un enseignant, un représentant d'école ou un simple visiteur.",
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: Colors.grey.shade500),
                         ),
-                      ),
-                      onPressed:
-                          () =>
-                              _handleRoleSelection(context, 'visitor', '/home'),
+                        const SizedBox(height: 40),
+                        _buildRoleButton(
+                          context,
+                          icon: Icons.person,
+                          text: "Je suis un enseignant",
+                          color: Colors.red.shade600,
+                          role: 'teacher',
+                          route: '/teacher-setup',
+                        ),
+                        const SizedBox(height: 20),
+                        _buildRoleButton(
+                          context,
+                          icon: Icons.school_rounded,
+                          text: "Je représente une école",
+                          color: Colors.red.shade600,
+                          role: 'school',
+                          route: '/school-setup',
+                        ),
+                        const SizedBox(height: 20),
+                        _buildRoleButton(
+                          context,
+                          icon: Icons.visibility_outlined,
+                          text: "Je suis un visiteur",
+                          color: Colors.grey.shade700,
+                          role: 'visitor',
+                          route: '/home',
+                          isOutlined: true,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

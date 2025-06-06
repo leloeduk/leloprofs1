@@ -1,6 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+// Import necessary models, blocs, and events
+import 'package:leloprof/features/school/presentation/bloc/bloc/school_bloc.dart';
+import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_bloc.dart';
+import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_state.dart';
+import '../../../../utils/widgets/contact_launch_button.dart';
+import '../../../school/presentation/bloc/bloc/school_event.dart';
+import '../../../school/presentation/bloc/bloc/school_state.dart';
+import '../../../teacher/presentation/bloc/bloc/teacher_event.dart';
 import '../../domain/models/joboffer_model.dart';
+import '../bloc/bloc/joboffer_bloc.dart';
+import '../bloc/bloc/joboffer_event.dart';
+import '../bloc/bloc/joboffer_state.dart';
 
 class JobOfferDetailPage extends StatefulWidget {
   final JobOfferModel offer;
@@ -13,8 +25,13 @@ class JobOfferDetailPage extends StatefulWidget {
 
 class _JobOfferDetailPageState extends State<JobOfferDetailPage>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _fadeAnimation;
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  bool _isApplying = false;
+  dynamic school;
+  dynamic teacher;
+  String? userRole;
+  String? currentUserId;
 
   @override
   void initState() {
@@ -23,8 +40,14 @@ class _JobOfferDetailPageState extends State<JobOfferDetailPage>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
     _controller.forward();
+
+    context.read<TeacherBloc>().add(LoadTeachers());
+    context.read<SchoolBloc>().add(LoadSchools());
   }
 
   @override
@@ -35,298 +58,238 @@ class _JobOfferDetailPageState extends State<JobOfferDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    final offer = widget.offer;
     final theme = Theme.of(context);
+    final offer = widget.offer;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: CircleAvatar(
-          backgroundColor: Colors.red.shade900,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.redAccent),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 12, right: 12),
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red.shade800,
-            elevation: 8,
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            shadowColor: Colors.grey,
-          ),
-          icon: const Icon(Icons.send_rounded, size: 22),
-          label: const Text(
-            'POSTULER',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-              letterSpacing: 1.2,
-              color: Colors.grey,
-            ),
-          ),
-          onPressed: () {
-            // TODO: Ajouter action postuler
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<JobOfferBloc, JobOfferState>(
+          listener: (context, state) {
+            if (state is JobOfferSuccess) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              setState(() {
+                _isApplying = false;
+              });
+            } else if (state is JobOfferError) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              setState(() => _isApplying = false);
+            }
           },
         ),
+        BlocListener<SchoolBloc, SchoolState>(
+          listener: (context, state) {
+            if (state is SchoolLoaded) {
+              setState(() {
+                school = state.schools.firstWhere(
+                  (s) => s.id == widget.offer.schoolId,
+                );
+                userRole = 'school';
+                currentUserId = school?.schoolId;
+              });
+            }
+          },
+        ),
+        BlocListener<TeacherBloc, TeacherState>(
+          listener: (context, state) {
+            if (state is TeacherLoaded) {
+              setState(() {
+                teacher = state.teachers.firstWhere(
+                  (t) => t.id == widget.offer.schoolId,
+                );
+                userRole = 'teacher';
+                currentUserId = teacher?.teacherId;
+              });
+            }
+          },
+        ),
+      ],
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: _buildAppBar(context),
+        floatingActionButton: _buildFloatingActionButton(),
+        body: AnimatedBuilder(
+          animation: _fadeAnimation,
+          builder: (context, child) {
+            return FadeTransition(opacity: _fadeAnimation, child: child);
+          },
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              _buildHeaderSection(offer, theme),
+              _buildSchoolInfoSection(offer),
+              _buildContentSections(offer, theme),
+            ],
+          ),
+        ),
       ),
-      body: AnimatedBuilder(
-        animation: _fadeAnimation,
-        builder: (context, child) {
-          return Opacity(opacity: _fadeAnimation.value, child: child);
+    );
+  }
+
+  Widget? _buildFloatingActionButton() {
+    if (userRole == 'teacher') {
+      return FloatingActionButton.extended(
+        backgroundColor: _isApplying ? Colors.grey : Colors.red.shade700,
+        elevation: 4,
+        icon:
+            _isApplying
+                ? Container(
+                  width: 24,
+                  height: 24,
+                  padding: const EdgeInsets.all(2.0),
+                  child: const CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 3,
+                  ),
+                )
+                : const Icon(Icons.send, color: Colors.white),
+        label: Text(
+          _isApplying ? 'ENVOI...' : 'POSTULER',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        onPressed: _isApplying ? null : _handleApplication,
+      );
+    } else if (userRole == 'school' && currentUserId == widget.offer.schoolId) {
+      return FloatingActionButton.extended(
+        backgroundColor: Colors.red.shade800,
+        elevation: 4,
+        icon: const Icon(Icons.group, color: Colors.white),
+        label: const Text(
+          'CANDIDATS',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        onPressed: () {
+          Navigator.pushNamed(
+            context,
+            '/candidates',
+            arguments: widget.offer.jobId,
+          );
         },
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    height: 180,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Color.fromARGB(255, 203, 17, 17),
-                          Color.fromARGB(255, 250, 44, 44),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(32),
-                        bottomRight: Radius.circular(32),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -40,
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundColor: Colors.white,
-                      child: CircleAvatar(
-                        radius: 56,
-                        backgroundImage:
-                            offer.schoolLogoUrl != null
-                                ? NetworkImage(offer.schoolLogoUrl!)
-                                : null,
-                        child:
-                            offer.schoolLogoUrl == null
-                                ? const Icon(
-                                  Icons.school,
-                                  size: 60,
-                                  color: Colors.redAccent,
-                                )
-                                : null,
-                      ),
-                    ),
+      );
+    }
+    return null;
+  }
+
+  void _handleApplication() {
+    context.read<JobOfferBloc>().add(
+      ApplyForJob(jobOfferId: widget.offer.jobId),
+    );
+    setState(() {
+      _isApplying = true;
+    });
+  }
+
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.red.shade900.withOpacity(0.8),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.arrow_back, color: Colors.white),
+        ),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
+  SliverToBoxAdapter _buildHeaderSection(JobOfferModel offer, ThemeData theme) {
+    return SliverToBoxAdapter(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.red.shade900, Colors.red.shade700],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(32),
+                bottomRight: Radius.circular(32),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -40,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: 2,
                   ),
                 ],
               ),
-            ),
-            SliverPadding(padding: const EdgeInsets.only(top: 60)),
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    offer.schoolName,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 24,
-                      color: Colors.redAccent,
-                      letterSpacing: 0.9,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${offer.schoolCity}, ${offer.schoolCountry}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
+              child: CircleAvatar(
+                radius: 56,
+                backgroundColor: Colors.white,
+                backgroundImage:
+                    offer.schoolLogoUrl != null
+                        ? NetworkImage(offer.schoolLogoUrl!)
+                        : null,
+                child:
+                    offer.schoolLogoUrl == null
+                        ? Icon(
+                          Icons.school,
+                          size: 60,
+                          color: theme.colorScheme.primary,
+                        )
+                        : null,
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+          ),
+        ],
+      ),
+    );
+  }
+
+  SliverPadding _buildSchoolInfoSection(JobOfferModel offer) {
+    return SliverPadding(
+      padding: const EdgeInsets.only(top: 60, bottom: 16),
+      sliver: SliverToBoxAdapter(
+        child: Column(
+          children: [
+            Text(
+              offer.schoolName,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.redAccent,
+              ),
             ),
-            SliverList(
-              delegate: SliverChildListDelegate([
-                _buildInfoCard(
-                  title: 'DESCRIPTION',
-                  child: Text(
-                    offer.description,
-                    style: TextStyle(
-                      fontSize: 15,
-                      height: 1.4,
-                      color: Colors.grey[900],
-                    ),
-                  ),
-                ),
-                _buildInfoCard(
-                  title: 'DÉTAILS DU POSTE',
-                  child: Column(
-                    children: [
-                      _buildDetailRow(
-                        Icons.work_outline,
-                        'Type de contrat',
-                        offer.contractType.name,
-                      ),
-                      _buildDetailRow(
-                        Icons.school_outlined,
-                        'Niveau scolaire',
-                        offer.schoolLevel.name,
-                      ),
-                      if (offer.teachingDomain != null)
-                        _buildDetailRow(
-                          Icons.category_outlined,
-                          'Domaine',
-                          offer.teachingDomain!,
-                        ),
-                      if (offer.subjects != null)
-                        _buildDetailRow(
-                          Icons.book_outlined,
-                          'Matières',
-                          offer.subjects!,
-                        ),
-                      if (offer.monthlySalary != null)
-                        _buildDetailRow(
-                          Icons.euro_symbol_outlined,
-                          'Salaire',
-                          '${offer.monthlySalary} € / mois',
-                        ),
-                      if (offer.weeklyHours != null)
-                        _buildDetailRow(
-                          Icons.access_time_outlined,
-                          'Heures/semaine',
-                          '${offer.weeklyHours}h',
-                        ),
-                      if (offer.requiredGender != null)
-                        _buildDetailRow(
-                          Icons.person_outline,
-                          'Genre requis',
-                          offer.requiredGender!.name,
-                        ),
-                    ],
-                  ),
-                ),
-                _buildInfoCard(
-                  title: 'CONTACT',
-                  child: Column(
-                    children: [
-                      if (offer.contactEmail != null)
-                        _buildDetailRow(
-                          Icons.email_outlined,
-                          'Email',
-                          offer.contactEmail!,
-                        ),
-                      if (offer.contactPhone != null)
-                        _buildDetailRow(
-                          Icons.phone_outlined,
-                          'Téléphone',
-                          offer.contactPhone!,
-                        ),
-                    ],
-                  ),
-                ),
-                _buildInfoCard(
-                  title: 'EXIGENCES',
-                  child:
-                      offer.requirements.isNotEmpty
-                          ? Column(
-                            children:
-                                offer.requirements
-                                    .map(
-                                      (req) => ListTile(
-                                        dense: true,
-                                        leading: const Icon(
-                                          Icons.check_circle_rounded,
-                                          color: Colors.green,
-                                        ),
-                                        title: Text(
-                                          req,
-                                          style: const TextStyle(fontSize: 15),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                          )
-                          : Text(
-                            'Aucune exigence spécifiée.',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                ),
-                _buildInfoCard(
-                  title: 'AVANTAGES',
-                  child:
-                      offer.benefits.isNotEmpty
-                          ? Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            children:
-                                offer.benefits
-                                    .map(
-                                      (b) => Chip(
-                                        label: Text(
-                                          b,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        backgroundColor: Colors.blue.shade50,
-                                        avatar: const Icon(
-                                          Icons.star,
-                                          color: Colors.blue,
-                                          size: 18,
-                                        ),
-                                        elevation: 2,
-                                        shadowColor: Colors.redAccent
-                                            .withOpacity(0.3),
-                                      ),
-                                    )
-                                    .toList(),
-                          )
-                          : Text(
-                            'Aucun avantage mentionné.',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                ),
-                _buildInfoCard(
-                  title: 'DATE LIMITE',
-                  child: Text(
-                    offer.applicationDeadline != null
-                        ? offer.applicationDeadline!.toLocal().toString().split(
-                          ' ',
-                        )[0]
-                        : 'Non spécifiée',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: Colors.red.shade600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 100),
-              ]),
+            const SizedBox(height: 4),
+            Text(
+              '${offer.schoolCity}, ${offer.schoolCountry}',
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
             ),
           ],
         ),
@@ -334,18 +297,173 @@ class _JobOfferDetailPageState extends State<JobOfferDetailPage>
     );
   }
 
+  SliverList _buildContentSections(JobOfferModel offer, ThemeData theme) {
+    return SliverList(
+      delegate: SliverChildListDelegate([
+        _buildInfoCard(
+          title: 'Description du poste',
+          child: Text(
+            offer.description,
+            style: const TextStyle(fontSize: 15, height: 1.6),
+          ),
+        ),
+        _buildInfoCard(
+          title: 'Détails du poste',
+          child: Column(
+            children: [
+              _buildDetailRow(
+                Icons.work_outline,
+                'Type de contrat',
+                offer.contractType.name,
+              ),
+              _buildDetailRow(
+                Icons.school_outlined,
+                'Niveau scolaire',
+                offer.schoolLevel.name,
+              ),
+              if (offer.teachingDomain != null)
+                _buildDetailRow(
+                  Icons.category_outlined,
+                  'Domaine',
+                  offer.teachingDomain!,
+                ),
+              if (offer.subjects != null)
+                _buildDetailRow(
+                  Icons.menu_book_outlined,
+                  'Matières',
+                  offer.subjects!,
+                ),
+              if (offer.monthlySalary != null)
+                _buildDetailRow(
+                  Icons.payments_outlined,
+                  'Salaire mensuel',
+                  '${offer.monthlySalary} €',
+                ),
+              if (offer.weeklyHours != null)
+                _buildDetailRow(
+                  Icons.access_time_outlined,
+                  'Temps de travail',
+                  '${offer.weeklyHours}h/semaine',
+                ),
+              if (offer.requiredGender != null)
+                _buildDetailRow(
+                  Icons.person_outline,
+                  'Genre requis',
+                  offer.requiredGender!.name,
+                ),
+            ],
+          ),
+        ),
+        _buildInfoCard(
+          title: 'Contact',
+          child: Column(
+            children: [
+              if (offer.contactEmail != null)
+                _buildDetailRow(
+                  Icons.email_outlined,
+                  'Email',
+                  offer.contactEmail!,
+                ),
+              if (offer.contactPhone != null) ...[
+                _buildDetailRow(
+                  Icons.phone_outlined,
+                  'Téléphone',
+                  offer.contactPhone!,
+                ),
+                const SizedBox(height: 12),
+                ContactLauncherButton(
+                  label: "Appeler",
+                  contact: "+242${offer.contactPhone}",
+                  icon: Icons.phone_android,
+                ),
+              ],
+            ],
+          ),
+        ),
+        _buildInfoCard(
+          title: 'Exigences',
+          child:
+              offer.requirements.isNotEmpty
+                  ? Column(
+                    children:
+                        offer.requirements
+                            .map(
+                              (req) => ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: const Icon(
+                                  Icons.check_circle_outline,
+                                  color: Colors.green,
+                                ),
+                                title: Text(req),
+                              ),
+                            )
+                            .toList(),
+                  )
+                  : Text(
+                    'Aucune exigence spécifique',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+        ),
+        _buildInfoCard(
+          title: 'Avantages',
+          child:
+              offer.benefits.isNotEmpty
+                  ? Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children:
+                        offer.benefits
+                            .map(
+                              (b) => Chip(
+                                label: Text(b),
+                                avatar: const Icon(
+                                  Icons.star_outline,
+                                  size: 18,
+                                  color: Colors.amber,
+                                ),
+                                backgroundColor: Colors.amber.shade50,
+                              ),
+                            )
+                            .toList(),
+                  )
+                  : Text(
+                    'Aucun avantage mentionné',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+        ),
+        _buildInfoCard(
+          title: 'Date limite de candidature',
+          child: Text(
+            offer.applicationDeadline != null
+                ? _formatDate(offer.applicationDeadline!)
+                : 'Non spécifiée',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.red.shade700,
+            ),
+          ),
+        ),
+        const SizedBox(height: 100),
+      ]),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
   Widget _buildInfoCard({required String title, required Widget child}) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -355,13 +473,13 @@ class _JobOfferDetailPageState extends State<JobOfferDetailPage>
           Text(
             title.toUpperCase(),
             style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-              letterSpacing: 1.4,
-              color: Colors.redAccent.shade700,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              letterSpacing: 1.1,
+              color: Colors.red.shade700,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           child,
         ],
       ),
@@ -370,29 +488,22 @@ class _JobOfferDetailPageState extends State<JobOfferDetailPage>
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.redAccent.shade700, size: 22),
-          const SizedBox(width: 14),
+          Icon(icon, color: Colors.red.shade700, size: 20),
+          const SizedBox(width: 12),
           Expanded(
             flex: 3,
             child: Text(
-              '$label :',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-                color: Colors.blueGrey.shade900,
-              ),
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(
-            flex: 5,
-            child: Text(
-              value,
-              style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
-            ),
+            flex: 4,
+            child: Text(value, style: const TextStyle(fontSize: 15)),
           ),
         ],
       ),

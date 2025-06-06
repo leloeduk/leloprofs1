@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../utils/widgets/contact_launch_button.dart';
 import '../../../../utils/widgets/custom_section_title.dart';
 import '../../../auth/domain/entities/user_model.dart';
 import 'package:leloprof/features/teacher/domain/models/teacher_model.dart';
@@ -352,6 +353,14 @@ class _TeacherDetailPageState extends State<TeacherDetailPage> {
                     'Téléphone',
                     teacher!.phoneNumber,
                   ),
+
+                  SizedBox(height: 5),
+                  ContactLauncherButton(
+                    label: "Appellez moi",
+                    contact: teacher!.phoneNumber,
+                    icon: Icons.phone_android,
+                  ),
+                  SizedBox(height: 5),
                   if (teacher!.secondaryPhone != null)
                     _buildInfoSection(
                       context,

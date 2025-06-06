@@ -9,6 +9,7 @@ class FirebaseStorageService {
   Future<String> uploadSchoolImage(
     String nameColletion,
     String id,
+    String name,
     dynamic imageFile,
   ) async {
     try {
@@ -16,7 +17,7 @@ class FirebaseStorageService {
           .ref()
           .child(nameColletion)
           .child(id)
-          .child('profile.jpg');
+          .child('images/$name/profile.jpg');
 
       UploadTask uploadTask;
 

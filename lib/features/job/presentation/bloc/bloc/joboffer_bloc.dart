@@ -12,6 +12,7 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
     on<CreateJobOffer>(_onCreateJobOffer);
     on<UpdateJobOffer>(_onUpdateJobOffer);
     on<DeleteJobOffer>(_onDeleteJobOffer);
+    on<ApplyForJob>(_onApplyForJob);
   }
 
   Future<void> _onLoadJobOffers(
@@ -19,12 +20,13 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
     Emitter<JobOfferState> emit,
   ) async {
     emit(JobOfferLoading());
-
     try {
-      // Charge les offres, filtrées par schoolId si elle est fournie
+      print('Loading job offers for schoolId: ${event.schoolId}');
       final offers = await repository.fetchAllJobOffers(event.schoolId);
+      print('Loaded ${offers.length} job offers');
       emit(JobOfferLoaded(offers));
     } catch (e) {
+      print('Error loading job offers: $e');
       emit(JobOfferError("Erreur lors du chargement : $e"));
     }
   }
@@ -62,6 +64,21 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
       add(LoadJobOffers());
     } catch (e) {
       emit(JobOfferError("Erreur lors de la suppression : $e"));
+    }
+  }
+
+  Future<void> _onApplyForJob(
+    ApplyForJob event,
+    Emitter<JobOfferState> emit,
+  ) async {
+    emit(JobOfferLoading()); // Émettre l'état de candidature en cours
+    try {
+      await repository.applyForJob(event.jobOfferId);
+      emit(
+        const JobOfferSuccess("Candidature envoyée avec succès"),
+      ); // Utiliser JobOfferSuccess ou un état spécifique
+    } catch (e) {
+      emit(JobOfferError("Erreur lors de la candidature : $e"));
     }
   }
 }

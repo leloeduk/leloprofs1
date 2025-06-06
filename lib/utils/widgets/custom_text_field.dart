@@ -5,10 +5,12 @@ class CustomTextField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.label,
+    this.prefixIcon,
   });
 
   final TextEditingController controller;
   final String label;
+  final Icon? prefixIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +21,7 @@ class CustomTextField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
+          prefixIcon: prefixIcon,
         ),
         validator:
             (value) =>

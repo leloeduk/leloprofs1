@@ -4,9 +4,13 @@ class CustomTextFormFieldPhone extends StatelessWidget {
   const CustomTextFormFieldPhone({
     super.key,
     required TextEditingController phoneNumberController,
+    this.validator,
+    this.prefixIcon,
   }) : _phoneNumberController = phoneNumberController;
 
   final TextEditingController _phoneNumberController;
+  final String? Function(String?)? validator;
+  final Icon? prefixIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +20,7 @@ class CustomTextFormFieldPhone extends StatelessWidget {
         labelText: 'Numéro de téléphone*',
         border: OutlineInputBorder(),
         prefixText: '+',
+        prefixIcon: Icon(Icons.phone),
       ),
       keyboardType: TextInputType.phone,
       validator: (value) {

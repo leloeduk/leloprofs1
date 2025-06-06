@@ -62,6 +62,52 @@ class _JobOfferEditPageState extends State<JobOfferEditPage> {
     Navigator.pop(context);
   }
 
+  void _viewApplicants() {
+    if (widget.offer.schoolId != widget.school.id) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cette offre ne appartient pas à votre école'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (widget.offer.applicantIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aucun enseignant n\'a postulé pour cette offre'),
+        ),
+      );
+      return;
+    }
+
+    // Naviguer vers une page qui affiche les enseignants ayant postulé
+    // Vous devrez implémenter cette page selon vos besoins
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => Scaffold(
+              appBar: AppBar(title: const Text('Candidats')),
+              body: ListView.builder(
+                itemCount: widget.offer.applicantIds.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text('Enseignant ${index + 1}'),
+                    subtitle: Text(widget.offer.applicantIds[index]),
+                    // Vous devrez récupérer les détails de l'enseignant ici
+                    onTap: () {
+                      // Action lorsqu'on clique sur un enseignant
+                    },
+                  );
+                },
+              ),
+            ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final school = widget.school;
@@ -71,6 +117,14 @@ class _JobOfferEditPageState extends State<JobOfferEditPage> {
         title: Text(
           widget.offer.jobId.isEmpty ? 'Créer une offre' : 'Modifier l\'offre',
         ),
+        actions: [
+          if (widget.offer.jobId.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.people_alt),
+              onPressed: _viewApplicants,
+              tooltip: 'Voir les candidats',
+            ),
+        ],
       ),
       body: BlocBuilder<JobOfferBloc, JobOfferState>(
         builder: (context, state) {

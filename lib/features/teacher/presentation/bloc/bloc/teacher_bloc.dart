@@ -12,6 +12,7 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     on<CreateTeacher>(_onCreateTeacher);
     on<UpdateTeacher>(_onUpdateTeacher);
     on<DeleteTeacher>(_onDeleteTeacher);
+    on<SearchTeachers>(_onSearchTeachers);
     // on<UpdateTeacherPlan>(_onUpdateTeacherPlan);
   }
 
@@ -92,19 +93,30 @@ class TeacherBloc extends Bloc<TeacherEvent, TeacherState> {
     return result != ConnectivityResult.none;
   }
 
-  // Future<void> _onUpdateTeacherPlan(
-  //   UpdateTeacherPlan event,
-  //   Emitter<TeacherState> emit,
-  // ) async {
-  //   emit(TeacherLoading());
-  //   try {
-  //     await teacherRepository.updateTeacherPlan(event.teacherId, event.newPlan);
-  //     final teachers = await teacherRepository.fetchAllTeachers();
-  //     emit(TeacherLoaded(teachers));
-  //   } catch (e) {
-  //     emit(
-  //       TeacherError('Erreur lors de la mise à jour du plan: ${e.toString()}'),
-  //     );
-  //   }
-  // }
+  Future<void> _onSearchTeachers(
+    SearchTeachers event,
+    Emitter<TeacherState> emit,
+  ) async {
+    emit(TeacherLoading());
+    try {
+      final teachers = await teacherRepository.searchTeachers(
+        name: event.name,
+        department: event.department,
+        country: event.country,
+        district: event.district,
+        subjects: event.subjects,
+        languages: event.languages,
+        isAvailable: event.isAvailable,
+        isCivilServant: event.isCivilServant,
+        isInspector: event.isInspector,
+      );
+      emit(TeacherSearchLoaded(teachers));
+    } catch (e) {
+      emit(
+        TeacherError(
+          "Erreur lors de la recherche des enseignants: ${e.toString()}",
+        ),
+      );
+    }
+  }
 }

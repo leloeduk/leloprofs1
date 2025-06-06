@@ -29,3 +29,10 @@ class JobOfferError extends JobOfferState {
   @override
   List<Object?> get props => [message];
 }
+
+class JobOfferSuccess extends JobOfferState {
+  final String message;
+  const JobOfferSuccess(this.message);
+  @override
+  List<Object?> get props => [message];
+}

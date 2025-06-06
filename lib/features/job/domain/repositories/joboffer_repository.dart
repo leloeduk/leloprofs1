@@ -6,7 +6,8 @@ abstract class JobOfferRepository {
 
   Future<List<JobOfferModel>> fetchAllJobOffers(String? schoolId);
   Future<void> createJobOffer(JobOfferModel offer);
-  Future<void> updateJobOffer(JobOfferModel jobOffer);
-  Future<void> deleteJobOffer(String id);
+  Future<bool> updateJobOffer(JobOfferModel jobOffer);
+  Future<bool> deleteJobOffer(String id);
+  Future<void> applyForJob(String jobOfferId);
   Future<JobOfferModel?> getJobOfferById(String id);
 }

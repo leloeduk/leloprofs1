@@ -40,6 +40,146 @@ class FirebaseTeacherRepos implements TeacherRepository {
     return null;
   }
 
+  @override
+  Future<List<TeacherModel>> searchTeachers({
+    String? name,
+    String? department,
+    String? country,
+    String? district,
+    List<String>? subjects,
+    List<String>? languages,
+    bool? isAvailable,
+    bool? isCivilServant,
+    bool? isInspector,
+    int? yearsOfExperience,
+    List<String>? educationCycles,
+    List<String>? diplomas,
+  }) async {
+    // Récupérer tous les enseignants
+    List<TeacherModel> teachers = await fetchAllTeachers();
+
+    // Appliquer les filtres
+    if (name != null) {
+      teachers =
+          teachers
+              .where(
+                (teacher) =>
+                    teacher.firstName.toLowerCase().contains(
+                      name.toLowerCase(),
+                    ) ||
+                    teacher.lastName.toLowerCase().contains(name.toLowerCase()),
+              )
+              .toList();
+    }
+
+    if (department != null) {
+      teachers =
+          teachers
+              .where(
+                (teacher) =>
+                    teacher.department.toLowerCase() ==
+                    department.toLowerCase(),
+              )
+              .toList();
+    }
+
+    if (country != null) {
+      teachers =
+          teachers
+              .where(
+                (teacher) =>
+                    teacher.country?.toLowerCase() == country.toLowerCase(),
+              )
+              .toList();
+    }
+
+    if (district != null) {
+      teachers =
+          teachers
+              .where(
+                (teacher) =>
+                    teacher.district?.toLowerCase() == district.toLowerCase(),
+              )
+              .toList();
+    }
+
+    if (subjects != null && subjects.isNotEmpty) {
+      teachers =
+          teachers
+              .where(
+                (teacher) => subjects.any(
+                  (subject) => teacher.subjects.contains(subject),
+                ),
+              )
+              .toList();
+    }
+
+    if (languages != null && languages.isNotEmpty) {
+      teachers =
+          teachers
+              .where(
+                (teacher) => languages.any(
+                  (language) => teacher.languages.contains(language),
+                ),
+              )
+              .toList();
+    }
+
+    if (isAvailable != null) {
+      teachers =
+          teachers
+              .where((teacher) => teacher.isAvailable == isAvailable)
+              .toList();
+    }
+
+    if (isCivilServant != null) {
+      teachers =
+          teachers
+              .where((teacher) => teacher.isCivilServant == isCivilServant)
+              .toList();
+    }
+
+    if (isInspector != null) {
+      teachers =
+          teachers
+              .where((teacher) => teacher.isInspector == isInspector)
+              .toList();
+    }
+
+    if (yearsOfExperience != null) {
+      teachers =
+          teachers
+              .where(
+                (teacher) => teacher.yearsOfExperience >= yearsOfExperience,
+              )
+              .toList();
+    }
+
+    if (educationCycles != null && educationCycles.isNotEmpty) {
+      teachers =
+          teachers
+              .where(
+                (teacher) => educationCycles.any(
+                  (cycle) => teacher.educationCycles.contains(cycle),
+                ),
+              )
+              .toList();
+    }
+
+    if (diplomas != null && diplomas.isNotEmpty) {
+      teachers =
+          teachers
+              .where(
+                (teacher) => diplomas.any(
+                  (diploma) => teacher.diplomas.contains(diploma),
+                ),
+              )
+              .toList();
+    }
+
+    return teachers;
+  }
+
   // Nouvelle méthode pour gérer le plan d’un enseignant
   //   @override
   //   Future<void> updateTeacherPlan(String teacherId, String newPlan) async {

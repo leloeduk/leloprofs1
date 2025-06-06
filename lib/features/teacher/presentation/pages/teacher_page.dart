@@ -70,6 +70,8 @@ class _TeacherPageState extends State<TeacherPage> {
                       child: Row(
                         children: [
                           CircleAvatar(
+                            backgroundColor:
+                                Theme.of(context).colorScheme.tertiary,
                             radius: 30,
                             backgroundImage:
                                 teacher.profileImageUrl != null

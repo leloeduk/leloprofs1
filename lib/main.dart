@@ -26,10 +26,10 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
-  final firebaseAuthRepository = FirebaseAuthRepos();
-  final firebaseJobofferRepos = FirebaseJobofferRepos();
-  final firebaseTeacherRepos = FirebaseTeacherRepos();
-  final firebaseSchollRepos = FirebaseSchoolRepos();
+  final _firebaseAuthRepository = FirebaseAuthRepos();
+  final _firebaseJobofferRepos = FirebaseJobofferRepos();
+  final _firebaseTeacherRepos = FirebaseTeacherRepos();
+  final _firebaseSchoolRepos = FirebaseSchoolRepos();
 
   @override
   Widget build(BuildContext context) {
@@ -38,20 +38,20 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create:
               (_) =>
-                  AuthBloc(firebaseAuthRepository)
+                  AuthBloc(_firebaseAuthRepository)
                     ..add(AppStarted()), // Injection de la dépendance
         ),
         BlocProvider(
           create:
               (_) => TeacherBloc(
-                teacherRepository: FirebaseTeacherRepos(),
+                teacherRepository: _firebaseTeacherRepos,
               ), // Injection de la dépendance
         ),
         BlocProvider(
-          create: (_) => SchoolBloc(schoolRepository: FirebaseSchoolRepos()),
+          create: (_) => SchoolBloc(schoolRepository: _firebaseSchoolRepos),
         ),
         BlocProvider(
-          create: (_) => JobOfferBloc(firebaseJobofferRepos),
+          create: (_) => JobOfferBloc(_firebaseJobofferRepos),
 
           // Injection de la dépendance
         ),

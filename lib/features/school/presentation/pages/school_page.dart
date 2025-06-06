@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -54,41 +55,77 @@ class _SchoolPageState extends State<SchoolPage> {
             }
 
             return ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(8),
               itemCount: schools.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final school = schools[index];
 
-                return Material(
+                return Card(
                   color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  elevation: 3,
+                  elevation: 2,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap:
                         () =>
                             context.push('/school/${school.id}', extra: school),
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(2),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundImage:
-                                school.profileImageUrl != null
-                                    ? NetworkImage(school.profileImageUrl!)
-                                    : null,
-                            child:
-                                school.profileImageUrl == null
-                                    ? const Icon(
-                                      Icons.school,
-                                      size: 32,
-                                      color: Colors.white70,
-                                    )
-                                    : null,
-                            backgroundColor: theme.colorScheme.primaryContainer,
+                          Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              CircleAvatar(
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.tertiary,
+                                radius: 30,
+                                backgroundImage:
+                                    school.profileImageUrl != null
+                                        ? NetworkImage(school.profileImageUrl!)
+                                        : null,
+
+                                child:
+                                    school.profileImageUrl == null
+                                        ? const Icon(
+                                          Icons.school,
+                                          size: 32,
+                                          color: Colors.white70,
+                                        )
+                                        : null,
+                              ),
+                              // ),
+                              TextButton(
+                                onPressed: () {
+                                  // Action quand on clique, si tu veux faire quelque chose
+                                },
+                                child: StreamBuilder<User?>(
+                                  stream:
+                                      FirebaseAuth.instance.authStateChanges(),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return Text(
+                                        "Chargement...",
+                                        style: TextStyle(color: Colors.grey),
+                                      );
+                                    } else if (snapshot.hasData &&
+                                        snapshot.data != null) {
+                                      return Text(
+                                        "En ligne",
+                                        style: TextStyle(color: Colors.green),
+                                      );
+                                    } else {
+                                      return Text(
+                                        "Hors ligne",
+                                        style: TextStyle(color: Colors.grey),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -114,7 +151,10 @@ class _SchoolPageState extends State<SchoolPage> {
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                Wrap(
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     if (school.types.isNotEmpty)
                                       _InfoChip(
@@ -128,6 +168,24 @@ class _SchoolPageState extends State<SchoolPage> {
                                         label: school.educationCycle.last,
                                         color: theme.colorScheme.secondary,
                                       ),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // _InfoChip(
+                                    //   icon: Icons.location_on,
+                                    //   label:
+                                    //       school.schoolCreationDate.to,
+                                    //   color: theme.colorScheme.tertiary,
+                                    Text(
+                                      "Année: ${school.yearOfEstablishment.toString()}",
+                                      style: TextStyle(
+                                        color: theme.colorScheme.tertiary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
                                     _InfoChip(
                                       icon: Icons.location_on,
                                       label: school.town,
@@ -206,10 +264,11 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: EdgeInsets.all(2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: Theme.of(context).colorScheme.surface,
+        border: Border.all(color: color, width: 1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -220,7 +279,7 @@ class _InfoChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color,
             ),

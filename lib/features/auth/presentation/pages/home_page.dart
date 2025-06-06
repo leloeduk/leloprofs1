@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       JobOfferPage(role: role),
       TeacherPage(role: role),
       SchoolPage(role: role),
-      TeacherSearchPage(allTeachers: []),
+      TeacherSearchPage(),
       // SettingsPage(),
     ];
   }

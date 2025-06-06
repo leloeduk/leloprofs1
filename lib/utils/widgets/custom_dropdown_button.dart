@@ -5,6 +5,7 @@ class CustomDropdownButton extends StatefulWidget {
   final List<String> listes;
   final String? selectedItem;
   final ValueChanged<String?> onChanged;
+  final Icon? prefixIcon;
 
   const CustomDropdownButton({
     super.key,
@@ -12,6 +13,7 @@ class CustomDropdownButton extends StatefulWidget {
     required this.listes,
     this.selectedItem,
     required this.onChanged,
+    this.prefixIcon,
   });
 
   @override
@@ -25,6 +27,7 @@ class _CustomDropdownButtonState extends State<CustomDropdownButton> {
       decoration: InputDecoration(
         labelText: widget.title,
         border: const OutlineInputBorder(),
+        prefixIcon: widget.prefixIcon,
       ),
       value: widget.selectedItem,
       items:

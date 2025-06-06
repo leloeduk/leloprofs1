@@ -218,7 +218,10 @@ class DrawerPage extends StatelessWidget {
                   Navigator.of(ctx).pop();
                   _logout(context);
                 },
-                child: const Text('Déconnexion'),
+                child: const Text(
+                  'Déconnexion',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),

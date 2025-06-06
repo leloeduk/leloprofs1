@@ -1,5 +1,5 @@
 class ListesApp {
-  static final subjets = [
+  static final subjects = [
     'Mathématiques',
     'Français',
     'SVT',
@@ -12,11 +12,12 @@ class ListesApp {
     'EPS',
     'Autres',
   ];
+
   static final levels = [
-    'Matérnelle',
+    'Maternelle',
     'Primaire',
     'Collège',
-    'Lycée Génerale',
+    'Lycée Général',
     'Lycée Professionnel',
     'Université',
     'Autres',
@@ -33,6 +34,35 @@ class ListesApp {
     'Doctorat',
     'Autres',
   ];
-  static final genders = ["homme", "femme"];
+
+  static final genders = ["Homme", "Femme"];
   static final isPublicListes = ["Public", "Privé"];
+
+  static final experienceYears = List.generate(
+    40,
+    (index) => '${index + 1} ans',
+  );
+
+  static final congoCities = [
+    'Brazzaville',
+    'Pointe-Noire',
+    'Dolisie',
+    'Nkayi',
+    'Kindamba',
+    'Impfondo',
+    'Ouésso',
+    'Madingo-Kayes',
+    'Owando',
+    'Sibiti',
+    'Loango',
+    'Madingou',
+    'Mossaka',
+    'Gamboma',
+    'Makoua',
+    'Sembé',
+    'Ewo',
+    'Mbinda',
+    'Lékana',
+    'Kinkala',
+  ];
 }

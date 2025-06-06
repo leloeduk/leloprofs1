@@ -37,9 +37,14 @@ class _JobOfferPageState extends State<JobOfferPage> {
       // Imports et AppBar inchangés
       body: BlocBuilder<JobOfferBloc, JobOfferState>(
         builder: (context, state) {
+          print('Current state: $state');
+          print('Number of offers: ${state.props.length}');
+
           if (state is JobOfferLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is JobOfferLoaded) {
+            print(state);
+            print(state.offers);
             if (state.offers.isEmpty) {
               return const Center(
                 child: Text(

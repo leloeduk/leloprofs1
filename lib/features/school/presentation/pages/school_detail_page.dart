@@ -214,11 +214,16 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                     'Cycles éducatifs',
                     widget.school.educationCycle.join(", "),
                   ),
-                  _buildInfoItem(
-                    context,
-                    Icons.campaign_outlined,
-                    'Annonces publiées',
-                    widget.school.jobPosts.join(", "),
+                  GestureDetector(
+                    onTap: () {
+                      context.push('/offer-details', extra: offer);
+                    },
+                    child: _buildInfoItem(
+                      context,
+                      Icons.campaign_outlined,
+                      'Annonces publiées',
+                      widget.school.jobPosts.join(", "),
+                    ),
                   ),
                   if (canEdit)
                     Padding(

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -148,7 +146,7 @@ class _TeacherEditPageState extends State<TeacherEditPage> {
     super.dispose();
   }
 
-  Future<void> _save() async {
+  _save() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
         String? imageUrl = widget.teacher.profileImageUrl;
@@ -156,6 +154,7 @@ class _TeacherEditPageState extends State<TeacherEditPage> {
           imageUrl = await FirebaseStorageService().uploadSchoolImage(
             "teachers",
             widget.teacher.id,
+            widget.teacher.firstName,
             _selectedImage!,
           );
         }
@@ -213,6 +212,7 @@ class _TeacherEditPageState extends State<TeacherEditPage> {
                   ? _cvUrlController.text.trim()
                   : null,
         );
+        print(imageUrl);
 
         await context.read<TeacherBloc>().teacherRepository.updateTeacher(
           updatedTeacher,
@@ -689,6 +689,7 @@ class _TeacherEditPageState extends State<TeacherEditPage> {
               ),
 
               const SizedBox(height: 30),
+
               SizedBox(
                 width: double.infinity,
                 height: 48,
