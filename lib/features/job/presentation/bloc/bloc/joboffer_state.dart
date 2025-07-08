@@ -36,3 +36,12 @@ class JobOfferSuccess extends JobOfferState {
   @override
   List<Object?> get props => [message];
 }
+
+class JobOfferLoadedSingle extends JobOfferState {
+  final JobOfferModel offer;
+
+  const JobOfferLoadedSingle(this.offer);
+
+  @override
+  List<Object> get props => [offer];
+}

@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:leloprof/features/auth/presentation/bloc/bloc/auth_state.dart';
 
 // Import necessary models, blocs, and events
 import 'package:leloprof/features/school/presentation/bloc/bloc/school_bloc.dart';
+import 'package:leloprof/features/teacher/domain/models/teacher_model.dart';
 import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_bloc.dart';
 import 'package:leloprof/features/teacher/presentation/bloc/bloc/teacher_state.dart';
+import 'package:leloprof/features/teacherapp/bloc/teacher_application_bloc.dart';
+import 'package:leloprof/features/teacherapp/bloc/teacher_application_event.dart';
+import 'package:leloprof/features/teacherapp/bloc/teacher_application_state.dart';
 import '../../../../utils/widgets/contact_launch_button.dart';
+import '../../../auth/presentation/bloc/bloc/auth_bloc.dart';
 import '../../../school/presentation/bloc/bloc/school_event.dart';
 import '../../../school/presentation/bloc/bloc/school_state.dart';
 import '../../../teacher/presentation/bloc/bloc/teacher_event.dart';
+import '../../../teacherapp/models/teacher_application_model.dart';
 import '../../domain/models/joboffer_model.dart';
 import '../bloc/bloc/joboffer_bloc.dart';
 import '../bloc/bloc/joboffer_event.dart';
@@ -60,6 +68,7 @@ class _JobOfferDetailPageState extends State<JobOfferDetailPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final offer = widget.offer;
+    TeacherModel? teacherModel;
 
     return MultiBlocListener(
       listeners: [
@@ -109,11 +118,11 @@ class _JobOfferDetailPageState extends State<JobOfferDetailPage>
           listener: (context, state) {
             if (state is TeacherLoaded) {
               setState(() {
-                teacher = state.teachers.firstWhere(
-                  (t) => t.id == widget.offer.schoolId,
-                );
+                // teacher = state.teachers.firstWhere(
+                //   (t) => t.id == widget.offer.schoolId,
+                // );
                 userRole = 'teacher';
-                currentUserId = teacher?.teacherId;
+                currentUserId = teacherModel!.id;
               });
             }
           },
@@ -134,6 +143,106 @@ class _JobOfferDetailPageState extends State<JobOfferDetailPage>
               _buildHeaderSection(offer, theme),
               _buildSchoolInfoSection(offer),
               _buildContentSections(offer, theme),
+
+              SliverToBoxAdapter(
+                child: BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, authState) {
+                    if (authState is Authenticated) {
+                      final user = authState.user;
+
+                      // Si l'utilisateur est un enseignant
+                      if (user.role == 'teacher') {
+                        return BlocConsumer<
+                          TeacherApplicationBloc,
+                          TeacherApplicationState
+                        >(
+                          listener: (context, state) {
+                            if (state is TeacherApplicationSuccess) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Candidature envoyée avec succès !",
+                                  ),
+                                ),
+                              );
+                            } else if (state is TeacherApplicationError) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Erreur : ${state.message}"),
+                                ),
+                              );
+                            }
+                          },
+                          builder: (context, state) {
+                            return Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: ElevatedButton(
+                                onPressed:
+                                    state is TeacherApplicationLoading
+                                        ? null
+                                        : () {
+                                          context
+                                              .read<TeacherApplicationBloc>()
+                                              .add(
+                                                ApplyToJobOffer(
+                                                  jobId: offer.jobId,
+                                                  teacherData:
+                                                      TeacherApplicationData.fromModel(
+                                                        teacherModel!,
+                                                      ),
+                                                ),
+                                              );
+                                        },
+
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child:
+                                    state is TeacherApplicationLoading
+                                        ? const CircularProgressIndicator()
+                                        : const Text("Postuler"),
+                              ),
+                            );
+                          },
+                        );
+                      }
+
+                      // Si l'utilisateur est une école
+                      if (user.role == 'ecole' && user.id == offer.schoolId) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              context.pushNamed(
+                                'jobApplications',
+                                pathParameters: {'jobId': offer.jobId},
+                              );
+                              // Exemple
+                            },
+                            icon: const Icon(Icons.people),
+                            label: const Text("Voir les postulants"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                    }
+
+                    return const SizedBox.shrink(); // Aucun bouton par défaut
+                  },
+                ),
+              ),
             ],
           ),
         ),

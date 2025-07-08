@@ -23,7 +23,8 @@ import '../features/settings/presentation/settings_page.dart';
 import '../features/teacher/presentation/pages/teacher_setup_page.dart';
 import '../features/teacher/presentation/pages/teacher_detail_page.dart';
 import '../features/school/presentation/pages/school_setup_page.dart';
-import '../features/teacher/presentation/pages/teacher_edit_page.dart'; // Exemple
+import '../features/teacher/presentation/pages/teacher_edit_page.dart';
+import '../features/teacherapp/pages/job_offer_applications_page.dart'; // Exemple
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -186,6 +187,14 @@ final GoRouter appRouter = GoRouter(
       path: '/suggestion',
       name: 'suggestion',
       builder: (context, state) => const SuggestionPage(),
+    ),
+    GoRoute(
+      path: '/job-applications/:jobId',
+      name: 'jobApplications',
+      builder: (context, state) {
+        final jobId = state.pathParameters['jobId']!;
+        return JobOfferApplicationsPage(jobId: jobId);
+      },
     ),
   ],
 );

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:leloprof/features/auth/presentation/pages/drawer_page.dart';
+import 'package:leloprof/features/googleads/bloc/ad_bloc.dart';
 import 'package:leloprof/features/job/presentation/pages/joboffer_page.dart';
 import 'package:leloprof/features/school/presentation/pages/school_page.dart';
 import 'package:leloprof/features/settings/presentation/settings_page.dart';
@@ -111,6 +113,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         stops: const [0, 0.5, 1],
                       ),
                     ),
+                  ),
+                  BlocBuilder<AdBloc, AdState>(
+                    builder: (context, state) {
+                      if (state is AdLoaded && state.bannerAd != null) {
+                        return SizedBox(
+                          height: 50,
+                          child: AdWidget(ad: state.bannerAd!),
+                        );
+                      }
+                      return const SizedBox();
+                    },
                   ),
                 ],
               ),

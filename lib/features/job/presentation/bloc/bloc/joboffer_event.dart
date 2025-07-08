@@ -50,3 +50,12 @@ class ApplyForJob extends JobOfferEvent {
   @override
   List<Object> get props => [jobOfferId];
 }
+
+class LoadJobOfferById extends JobOfferEvent {
+  final String jobOfferId;
+
+  LoadJobOfferById(this.jobOfferId);
+
+  @override
+  List<Object> get props => [jobOfferId];
+}

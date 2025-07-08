@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'joboffer_event.dart';
 import 'joboffer_state.dart';
-import '../../../domain/models/joboffer_model.dart';
 import '../../../domain/repositories/joboffer_repository.dart';
 
 class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
@@ -13,6 +12,7 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
     on<UpdateJobOffer>(_onUpdateJobOffer);
     on<DeleteJobOffer>(_onDeleteJobOffer);
     on<ApplyForJob>(_onApplyForJob);
+    on<LoadJobOfferById>(_onLoadJobOfferById);
   }
 
   Future<void> _onLoadJobOffers(
@@ -79,6 +79,23 @@ class JobOfferBloc extends Bloc<JobOfferEvent, JobOfferState> {
       ); // Utiliser JobOfferSuccess ou un état spécifique
     } catch (e) {
       emit(JobOfferError("Erreur lors de la candidature : $e"));
+    }
+  }
+
+  Future<void> _onLoadJobOfferById(
+    LoadJobOfferById event,
+    Emitter<JobOfferState> emit,
+  ) async {
+    emit(JobOfferLoading());
+    try {
+      final offer = await repository.getJobOfferById(event.jobOfferId);
+      if (offer != null) {
+        emit(JobOfferLoadedSingle(offer));
+      } else {
+        emit(JobOfferError('Offer not found'));
+      }
+    } catch (e) {
+      emit(JobOfferError('Failed to load offer: ${e.toString()}'));
     }
   }
 }

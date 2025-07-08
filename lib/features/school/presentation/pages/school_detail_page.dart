@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:leloprof/features/job/domain/models/joboffer_model.dart';
+import 'package:leloprof/features/job/presentation/bloc/bloc/joboffer_bloc.dart';
 import 'package:leloprof/features/school/domain/models/school_model.dart';
-
-import '../../../job/presentation/pages/joboffer_edit_page.dart';
+import '../../../job/presentation/bloc/bloc/joboffer_event.dart';
+import '../../../job/presentation/bloc/bloc/joboffer_state.dart';
 
 class SchoolDetailPage extends StatefulWidget {
   final SchoolModel school;
@@ -21,6 +23,40 @@ class SchoolDetailPage extends StatefulWidget {
 
 class _SchoolDetailPageState extends State<SchoolDetailPage> {
   late final JobOfferModel offer;
+
+  void _navigateToOfferDetails(BuildContext context, JobOfferModel offer) {
+    // Charge les détails complets avant la navigation
+    context.read<JobOfferBloc>().add(LoadJobOfferById(offer.jobId));
+
+    // Navigation après un court délai pour permettre le chargement
+    Future.delayed(const Duration(milliseconds: 300), () {
+      context.push('/offer-details', extra: offer);
+    });
+  }
+
+  void _createNewJobOffer(BuildContext context) {
+    final newOffer = JobOfferModel(
+      jobId: '', // Généré côté serveur
+      creationDate: DateTime.now(),
+      schoolId: widget.school.id,
+      schoolName: widget.school.name,
+      schoolLogoUrl: widget.school.profileImageUrl,
+      schoolCountry: widget.school.country ?? '',
+      schoolCity: widget.school.town,
+      schoolAddress: '',
+      title: '',
+      description: '',
+      contractType: ContractType.fullTime,
+      schoolLevel: SchoolLevel.primary,
+      contactEmail: widget.school.email,
+      contactPhone: widget.school.primaryPhone,
+    );
+
+    context.push(
+      '/create-offer',
+      extra: {'school': widget.school, 'initialOffer': newOffer},
+    );
+  }
 
   @override
   void initState() {
@@ -55,6 +91,10 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
       benefits: [],
       applicantIds: [],
     );
+    if (context.read<JobOfferBloc>().state is! LoadJobOffers) {
+      context.read<JobOfferBloc>().add(LoadJobOffers(widget.school.id));
+    }
+    context.read<JobOfferBloc>().add(LoadJobOfferById(widget.school.id));
     super.initState();
   }
 
@@ -153,6 +193,239 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  Text(
+                    'Offres disponibles',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  BlocConsumer<JobOfferBloc, JobOfferState>(
+                    listener: (context, state) {
+                      if (state is JobOfferError) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(state.message)));
+                      }
+                    },
+                    builder: (context, state) {
+                      if (state is JobOfferLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (state is JobOfferLoaded) {
+                        final schoolOffers =
+                            state.offers
+                                .where(
+                                  (offer) => offer.schoolId == widget.school.id,
+                                )
+                                .toList();
+
+                        if (schoolOffers.isEmpty) {
+                          return Center(
+                            child: Column(
+                              children: [
+                                const Icon(
+                                  Icons.work_off,
+                                  size: 48,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Aucune offre disponible pour cette école',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                if (widget.school.id == widget.currentUserId)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 16),
+                                    child: ElevatedButton(
+                                      onPressed:
+                                          () => _createNewJobOffer(context),
+                                      child: const Text('Créer une offre'),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return Column(
+                          children: [
+                            ListView.separated(
+                              physics: const NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: schoolOffers.length,
+                              separatorBuilder:
+                                  (_, __) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final offer = schoolOffers[index];
+                                return Card(
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap:
+                                        () => _navigateToOfferDetails(
+                                          context,
+                                          offer,
+                                        ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  offer.title,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                ),
+                                              ),
+                                              if (offer.schoolLogoUrl != null)
+                                                CircleAvatar(
+                                                  radius: 20,
+                                                  backgroundImage: NetworkImage(
+                                                    offer.schoolLogoUrl!,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              Chip(
+                                                label: Text(
+                                                  offer.contractType.name,
+                                                ),
+                                                backgroundColor:
+                                                    Theme.of(context)
+                                                        .colorScheme
+                                                        .secondaryContainer,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Chip(
+                                                label: Text(
+                                                  offer.schoolLevel.name,
+                                                ),
+                                                backgroundColor:
+                                                    Theme.of(context)
+                                                        .colorScheme
+                                                        .tertiaryContainer,
+                                              ),
+                                            ],
+                                          ),
+                                          if (offer.monthlySalary != null) ...[
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Salaire: ${offer.monthlySalary} €/mois',
+                                              style:
+                                                  Theme.of(
+                                                    context,
+                                                  ).textTheme.bodyMedium,
+                                            ),
+                                          ],
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            children: [
+                                              Text(
+                                                'Voir détails',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      color:
+                                                          Theme.of(
+                                                            context,
+                                                          ).colorScheme.primary,
+                                                    ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Icon(
+                                                Icons.arrow_forward,
+                                                size: 16,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            if (widget.school.id == widget.currentUserId)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _createNewJobOffer(context),
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Ajouter une offre'),
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: const Size(
+                                      double.infinity,
+                                      50,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      } else if (state is JobOfferError) {
+                        return Center(
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                size: 48,
+                                color: Colors.red,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Erreur de chargement des offres',
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              const SizedBox(height: 16),
+                              OutlinedButton(
+                                onPressed:
+                                    () => context.read<JobOfferBloc>().add(
+                                      LoadJobOffers(widget.school.id),
+                                    ),
+                                child: const Text('Réessayer'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
                   ),
                 ],
               ),

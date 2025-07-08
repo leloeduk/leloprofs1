@@ -45,14 +45,15 @@ class FirebaseJobofferRepos implements JobOfferRepository {
   @override
   Future<JobOfferModel?> getJobOfferById(String id) async {
     try {
-      final doc = await collection.doc(id).get();
+      final doc = await collectionRef.doc(id).get();
+
       if (doc.exists) {
-        return JobOfferModel.fromJson(doc.data()!);
+        return JobOfferModel.fromJson(doc.data()!..['jobId'] = doc.id);
       }
+      return null;
     } catch (e) {
-      print("Erreur lors de la récupération de l'offre : $e");
+      throw Exception('Failed to fetch job offer: $e');
     }
-    return null;
   }
 
   @override
